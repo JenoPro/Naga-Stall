@@ -11,7 +11,6 @@ import {
   Alert,
 } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import supabase from "../config/supabaseClient";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -26,36 +25,45 @@ export default function RegisterScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
 
-  // Check for internet connection
+  // Enhanced connection check
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected);
+      console.log("Network state:", state);
+      setIsConnected(state.isConnected && state.isInternetReachable);
     });
 
-    // Clean up subscription
+    // Initial check
+    NetInfo.fetch().then(state => {
+      console.log("Initial network state:", state);
+      setIsConnected(state.isConnected && state.isInternetReachable);
+    });
+
     return () => unsubscribe();
   }, []);
 
-  // Effect to sync offline registrations when coming back online
-  useEffect(() => {
-    const handleConnectivityChange = (state) => {
-      const currentlyConnected = state.isConnected;
-
-      // If we just came online (was offline, now online)
-      if (currentlyConnected && !isConnected) {
-        syncOfflineRegistrations();
+  // Test Supabase connection
+  const testSupabaseConnection = async () => {
+    try {
+      console.log("Testing Supabase connection...");
+      const { data, error } = await supabase
+        .from("Registrant")
+        .select("count", { count: "exact", head: true });
+      
+      if (error) {
+        console.error("Supabase connection test failed:", error);
+        return false;
       }
-
-      setIsConnected(currentlyConnected);
-    };
-
-    const unsubscribe = NetInfo.addEventListener(handleConnectivityChange);
-    return () => unsubscribe();
-  }, [isConnected]);
+      
+      console.log("Supabase connection successful");
+      return true;
+    } catch (error) {
+      console.error("Supabase connection test error:", error);
+      return false;
+    }
+  };
 
   // Image picker function
   const pickImage = async () => {
-    // Request permissions
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
@@ -70,7 +78,8 @@ export default function RegisterScreen({ navigation }) {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.7, // Further reduced for better upload
+      allowsMultipleSelection: false,
     });
 
     if (!result.canceled) {
@@ -78,135 +87,16 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
-  // Function to save registration data locally with image
-  const saveRegistrationLocally = async (registrantData, localImageUri) => {
-    try {
-      // Get existing offline registrations or initialize empty array
-      const existingDataString = await AsyncStorage.getItem(
-        "offlineRegistrations"
-      );
-      const existingData = existingDataString
-        ? JSON.parse(existingDataString)
-        : [];
-
-      // Add new registration with timestamp and local image path
-      const newData = [
-        ...existingData,
-        {
-          ...registrantData,
-          localImageUri,
-          timestamp: new Date().toISOString(),
-          synced: false,
-        },
-      ];
-
-      // Save updated array back to AsyncStorage
-      await AsyncStorage.setItem(
-        "offlineRegistrations",
-        JSON.stringify(newData)
-      );
-      console.log("Registration saved locally with image reference");
-      return true;
-    } catch (error) {
-      console.error("Error saving registration locally:", error);
+  const validateForm = () => {
+    if (!fullName.trim() || !emailAddress.trim() || !phoneNumber.trim() || !address.trim()) {
+      Alert.alert("Missing Information", "Please fill in all required fields");
       return false;
     }
-  };
 
-  // Function to sync offline registrations
-  const syncOfflineRegistrations = async () => {
-    try {
-      const existingDataString = await AsyncStorage.getItem(
-        "offlineRegistrations"
-      );
-      if (!existingDataString) return;
-
-      const offlineRegistrations = JSON.parse(existingDataString);
-      const unsynced = offlineRegistrations.filter((reg) => !reg.synced);
-
-      if (unsynced.length === 0) return;
-
-      // Process each unsynced registration
-      const results = await Promise.all(
-        unsynced.map(async (registration, index) => {
-          try {
-            let validIdUrl = null;
-
-            // If there's a local image, upload it
-            if (registration.localImageUri) {
-              const response = await fetch(registration.localImageUri);
-              const blob = await response.blob();
-
-              const filename = `${Date.now()}_offline_${index}.jpg`;
-              const filePath = `valid-ids/${filename}`;
-
-              const { data: fileData, error: fileError } =
-                await supabase.storage
-                  .from("registrant-images")
-                  .upload(filePath, blob);
-
-              if (fileError) throw fileError;
-
-              const { data: urlData } = supabase.storage
-                .from("registrant-images")
-                .getPublicUrl(filePath);
-
-              validIdUrl = urlData.publicUrl;
-            }
-
-            // Create the data object with validId URL
-            const registrantData = {
-              fullName: registration.fullName,
-              emailAddress: registration.emailAddress,
-              phoneNumber: registration.phoneNumber,
-              address: registration.address,
-              validId: validIdUrl,
-            };
-
-            // Insert into Supabase
-            const { error } = await supabase
-              .from("Registrant")
-              .insert([registrantData]);
-
-            if (error) throw error;
-
-            return { success: true, index };
-          } catch (error) {
-            console.error(`Error syncing registration ${index}:`, error);
-            return { success: false, index };
-          }
-        })
-      );
-
-      // Update offline storage to mark synced items
-      const updatedRegistrations = offlineRegistrations.map((reg, index) => {
-        const result = results.find((r) => r.index === index);
-        if (result && result.success) {
-          return { ...reg, synced: true };
-        }
-        return reg;
-      });
-
-      await AsyncStorage.setItem(
-        "offlineRegistrations",
-        JSON.stringify(updatedRegistrations)
-      );
-
-      const successCount = results.filter((r) => r.success).length;
-      if (successCount > 0) {
-        Alert.alert(
-          "Sync Complete",
-          `Successfully synced ${successCount} offline registrations.`
-        );
-      }
-    } catch (error) {
-      console.error("Error in sync process:", error);
-    }
-  };
-
-  const validateForm = () => {
-    if (!fullName || !emailAddress || !phoneNumber || !address) {
-      Alert.alert("Missing Information", "Please fill in all required fields");
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailAddress)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address");
       return false;
     }
 
@@ -232,86 +122,144 @@ export default function RegisterScreen({ navigation }) {
     try {
       setIsLoading(true);
 
+      // Test network connectivity first
+      console.log("Checking network connectivity...");
+      const networkState = await NetInfo.fetch();
+      console.log("Current network state:", networkState);
+
+      if (!networkState.isConnected) {
+        Alert.alert(
+          "No Internet Connection",
+          "Please check your internet connection and try again."
+        );
+        return;
+      }
+
+      // Test Supabase connection
+      const supabaseConnected = await testSupabaseConnection();
+      if (!supabaseConnected) {
+        Alert.alert(
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again."
+        );
+        return;
+      }
+
       let validIdUrl = null;
 
-      // Check if online first
-      if (isConnected) {
+      // Upload image if exists
+      if (image) {
+        console.log("Starting image upload...");
+
         try {
-          // If there's an image, upload it first
-          if (image) {
-            // Convert image URI to blob
-            const response = await fetch(image);
-            const blob = await response.blob();
+          // Convert image URI to blob with timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-            // Generate a unique filename
-            const filename = `${Date.now()}_${fullName.replace(
-              /\s+/g,
-              "_"
-            )}.jpg`;
-            const filePath = `valid-ids/${filename}`;
+          const response = await fetch(image, {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
 
-            // Upload to Supabase Storage with timeout
-            const uploadTimeoutPromise = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("Upload timeout")), 15000)
-            );
-
-            const uploadPromise = supabase.storage
-              .from("registrant-images")
-              .upload(filePath, blob);
-
-            const { data: fileData, error: fileError } = await Promise.race([
-              uploadPromise,
-              uploadTimeoutPromise,
-            ]);
-
-            if (fileError) {
-              console.error("ID image upload error:", fileError);
-              throw fileError;
-            }
-
-            // Get the public URL for the uploaded file
-            const { data: urlData } = supabase.storage
-              .from("registrant-images")
-              .getPublicUrl(filePath);
-
-            validIdUrl = urlData.publicUrl;
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.status}`);
           }
 
-          // Create the data object to insert
-          const registrantData = {
-            fullName,
-            emailAddress,
-            phoneNumber,
-            address,
-            validId: validIdUrl,
-          };
+          const blob = await response.blob();
+          console.log("Image converted to blob, size:", blob.size);
 
-          console.log(
-            "Starting registration process with data:",
-            registrantData
+          // Generate a unique filename
+          const timestamp = Date.now();
+          const filename = `${timestamp}_${fullName.replace(/\s+/g, "_")}.jpg`;
+          const filePath = `valid-ids/${filename}`;
+
+          // Upload to Supabase Storage with retry logic
+          let uploadSuccess = false;
+          let attempts = 0;
+          const maxAttempts = 3;
+
+          while (!uploadSuccess && attempts < maxAttempts) {
+            attempts++;
+            console.log(`Upload attempt ${attempts}/${maxAttempts}`);
+
+            try {
+              const { data: fileData, error: fileError } = await supabase.storage
+                .from("registrant-images")
+                .upload(filePath, blob, {
+                  cacheControl: '3600',
+                  upsert: false,
+                  duplex: 'half' // Add duplex option for better compatibility
+                });
+
+              if (fileError) {
+                throw fileError;
+              }
+
+              console.log("Image uploaded successfully:", fileData);
+              uploadSuccess = true;
+
+              // Get the public URL for the uploaded file
+              const { data: urlData } = supabase.storage
+                .from("registrant-images")
+                .getPublicUrl(filePath);
+
+              validIdUrl = urlData.publicUrl;
+              console.log("Image URL generated:", validIdUrl);
+
+            } catch (uploadError) {
+              console.error(`Upload attempt ${attempts} failed:`, uploadError);
+              
+              if (attempts >= maxAttempts) {
+                throw uploadError;
+              }
+              
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+          }
+
+        } catch (imageError) {
+          console.error("Image processing error:", imageError);
+          Alert.alert(
+            "Upload Failed",
+            "Failed to upload your ID image. Please try with a smaller image or check your connection."
           );
+          return;
+        }
+      }
 
-          // Set a timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Request timeout")), 10000)
-          );
+      // Create the data object to insert
+      const registrantData = {
+        fullName: fullName.trim(),
+        emailAddress: emailAddress.trim().toLowerCase(),
+        phoneNumber: phoneNumber.trim(),
+        address: address.trim(),
+        validId: validIdUrl,
+      };
 
-          // Try to insert with timeout
-          const insertPromise = supabase
+      console.log("Starting registration process with data:", registrantData);
+
+      // Insert into Supabase with retry logic
+      let insertSuccess = false;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (!insertSuccess && attempts < maxAttempts) {
+        attempts++;
+        console.log(`Database insert attempt ${attempts}/${maxAttempts}`);
+
+        try {
+          const { data, error } = await supabase
             .from("Registrant")
-            .insert([registrantData]);
-
-          const { data, error } = await Promise.race([
-            insertPromise,
-            timeoutPromise,
-          ]);
+            .insert([registrantData])
+            .select();
 
           if (error) {
-            console.error("Supabase insert error:", error);
             throw error;
           }
 
           console.log("Insert successful, data:", data);
+          insertSuccess = true;
 
           Alert.alert("Success", "Registration submitted successfully!", [
             { text: "OK", onPress: () => navigation.navigate("Home") },
@@ -325,50 +273,37 @@ export default function RegisterScreen({ navigation }) {
           setImage(null);
           setTermsAccepted(false);
 
-          return;
-        } catch (directError) {
-          console.log("Direct insert failed, saving locally:", directError);
-          // Fall through to offline storage
+        } catch (insertError) {
+          console.error(`Insert attempt ${attempts} failed:`, insertError);
+          
+          if (attempts >= maxAttempts) {
+            throw insertError;
+          }
+          
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
-      // Create the data object for offline storage
-      const registrantData = {
-        fullName,
-        emailAddress,
-        phoneNumber,
-        address,
-      };
-
-      // If we're offline or the insert failed, save locally
-      const savedLocally = await saveRegistrationLocally(registrantData, image);
-
-      if (savedLocally) {
-        Alert.alert(
-          "Registration Saved",
-          "Your registration has been saved locally and will be submitted when your device reconnects to the internet.",
-          [{ text: "OK", onPress: () => navigation.navigate("Home") }]
-        );
-
-        // Clear form
-        setFullName("");
-        setEmailAddress("");
-        setPhoneNumber("");
-        setAddress("");
-        setImage(null);
-        setTermsAccepted(false);
-      } else {
-        Alert.alert(
-          "Registration Failed",
-          "We couldn't save your registration. Please try again later."
-        );
-      }
     } catch (error) {
-      console.error("Final registration error:", error);
-      Alert.alert(
-        "Registration Issue",
-        "We're having trouble processing your registration. Please try again later."
-      );
+      console.error("Registration error:", error);
+      
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.message.includes("Network request failed") || 
+          error.message.includes("fetch")) {
+        errorMessage = "Network connection failed. Please check your internet connection and try again.";
+      } else if (error.message.includes("timeout") || 
+                 error.message.includes("AbortError")) {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+      } else if (error.message.includes("duplicate") || 
+                 error.message.includes("unique")) {
+        errorMessage = "This email address is already registered. Please use a different email.";
+      } else if (error.message) {
+        errorMessage = `Registration failed: ${error.message}`;
+      }
+
+      Alert.alert("Registration Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -385,8 +320,7 @@ export default function RegisterScreen({ navigation }) {
         {!isConnected && (
           <View style={styles.offlineBanner}>
             <Text style={styles.offlineText}>
-              You are currently offline. Your registration will be saved
-              locally.
+              No internet connection. Please connect to register.
             </Text>
           </View>
         )}
@@ -436,6 +370,7 @@ export default function RegisterScreen({ navigation }) {
               value={emailAddress}
               onChangeText={setEmailAddress}
               keyboardType="email-address"
+              autoCapitalize="none"
             />
 
             <Text style={styles.fieldLabel}>Phone Number*</Text>
@@ -475,35 +410,6 @@ export default function RegisterScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Register Button */}
-            <TouchableOpacity
-              style={[
-                styles.registerButton,
-                (isLoading ||
-                  !fullName ||
-                  !emailAddress ||
-                  !phoneNumber ||
-                  !address ||
-                  !image ||
-                  !termsAccepted) &&
-                  styles.registerButtonDisabled,
-              ]}
-              onPress={handleRegister}
-              disabled={
-                isLoading ||
-                !fullName ||
-                !emailAddress ||
-                !phoneNumber ||
-                !address ||
-                !image ||
-                !termsAccepted
-              }
-            >
-              <Text style={styles.registerText}>
-                {isLoading ? "Submitting..." : "Register"}
-              </Text>
-            </TouchableOpacity>
-
             {/* Terms & Conditions */}
             <View style={styles.termsRow}>
               <TouchableOpacity
@@ -519,6 +425,37 @@ export default function RegisterScreen({ navigation }) {
                 I have agreed to the terms and conditions
               </Text>
             </View>
+
+            {/* Register Button */}
+            <TouchableOpacity
+              style={[
+                styles.registerButton,
+                (isLoading ||
+                  !isConnected ||
+                  !fullName ||
+                  !emailAddress ||
+                  !phoneNumber ||
+                  !address ||
+                  !image ||
+                  !termsAccepted) &&
+                  styles.registerButtonDisabled,
+              ]}
+              onPress={handleRegister}
+              disabled={
+                isLoading ||
+                !isConnected ||
+                !fullName ||
+                !emailAddress ||
+                !phoneNumber ||
+                !address ||
+                !image ||
+                !termsAccepted
+              }
+            >
+              <Text style={styles.registerText}>
+                {isLoading ? "Submitting..." : "Register"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
