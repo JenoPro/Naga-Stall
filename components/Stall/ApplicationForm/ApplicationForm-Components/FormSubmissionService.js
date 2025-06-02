@@ -1,6 +1,109 @@
 import { Alert } from "react-native";
 import supabase from "../../../../config/supabaseClient";
 
+// Function to generate sanitized folder name from user's full name
+const generateFolderName = (fullName) => {
+  if (!fullName) return "unknown_user";
+  return fullName
+    .replace(/[^a-zA-Z0-9\s]/g, "") // Remove special characters
+    .replace(/\s+/g, "_") // Replace spaces with underscores
+    .toLowerCase(); // Convert to lowercase for consistency
+};
+
+// Function to upload signature to Supabase Storage
+const uploadSignatureToSupabase = async (base64Signature, userFullName) => {
+  try {
+    if (!userFullName) {
+      throw new Error("User full name is required for upload");
+    }
+
+    // Generate unique filename with timestamp
+    const timestamp = new Date().getTime();
+    const fileName = `signature_${timestamp}.png`;
+
+    // Create folder path using user's full name
+    const folderName = generateFolderName(userFullName);
+    const filePath = `${folderName}/${fileName}`;
+
+    console.log("Uploading signature to path:", filePath);
+
+    // Clean the base64 string and convert to Uint8Array
+    const cleanBase64 = base64Signature.replace(
+      /^data:image\/[a-z]+;base64,/,
+      ""
+    );
+    const binaryString = atob(cleanBase64);
+    const bytes = new Uint8Array(binaryString.length);
+
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Upload to Supabase storage with retry mechanism
+    let uploadResult;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        const { data, error } = await supabase.storage
+          .from("documents-image")
+          .upload(filePath, bytes, {
+            contentType: "image/png",
+            upsert: true,
+          });
+
+        if (error) throw error;
+
+        uploadResult = data;
+        break;
+      } catch (uploadError) {
+        attempts++;
+        console.log(`Upload attempt ${attempts} failed:`, uploadError);
+
+        if (attempts >= maxAttempts) {
+          throw uploadError;
+        }
+
+        // Wait before retry
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
+      }
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from("documents-image")
+      .getPublicUrl(filePath);
+
+    console.log("Signature uploaded successfully:", {
+      path: uploadResult.path,
+      publicUrl: publicUrlData.publicUrl,
+    });
+
+    return {
+      path: uploadResult.path,
+      publicUrl: publicUrlData.publicUrl,
+      fileName: fileName,
+    };
+  } catch (error) {
+    console.error("Error uploading signature:", error);
+
+    // Better error handling
+    if (
+      error.message?.includes("network") ||
+      error.message?.includes("fetch")
+    ) {
+      throw new Error(
+        "Network connection error. Please check your internet connection and try again."
+      );
+    } else if (error.message?.includes("storage")) {
+      throw new Error("Storage error. Please try again later.");
+    } else {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+  }
+};
+
 export const submitApplicationForm = async (formData, stallInfo) => {
   try {
     // Validate required fields
@@ -50,6 +153,33 @@ export const submitApplicationForm = async (formData, stallInfo) => {
       testData?.length || 0
     );
 
+    // Handle signature upload if signature exists
+    let signatureUrl = null;
+    let signaturePath = null;
+    let signatureFileName = null;
+
+    if (formData.applicantSignature && formData.userFullName) {
+      try {
+        console.log("Uploading signature to Supabase Storage...");
+        const uploadResult = await uploadSignatureToSupabase(
+          formData.applicantSignature,
+          formData.userFullName
+        );
+        
+        signatureUrl = uploadResult.publicUrl;
+        signaturePath = uploadResult.path;
+        signatureFileName = uploadResult.fileName;
+        
+        console.log("Signature uploaded successfully:", uploadResult);
+      } catch (uploadError) {
+        console.error("Signature upload failed:", uploadError);
+        Alert.alert(
+          "Signature Upload Warning",
+          "Failed to upload signature to storage, but application will continue. You can try uploading the signature again later."
+        );
+      }
+    }
+
     // Prepare application data for Supabase
     const applicationData = {
       Applicants_Name: formData.fullName,
@@ -80,9 +210,18 @@ export const submitApplicationForm = async (formData, stallInfo) => {
       applicationData.Applicants_RelativeStallOwner =
         formData.relativeStallOwner;
     }
-    if (formData.applicantSignature?.trim()) {
-      applicationData.Applicants_Signature = formData.applicantSignature;
+    
+    // Add signature URL if upload was successful
+    if (signatureUrl) {
+      applicationData.Applicants_Signature = signatureUrl;
     }
+    if (signaturePath) {
+      applicationData.signature_path = signaturePath;
+    }
+    if (signatureFileName) {
+      applicationData.signature_filename = signatureFileName;
+    }
+    
     if (formData.houseLocation?.trim()) {
       applicationData.Applicants_HouseLocation = formData.houseLocation;
     }
@@ -175,6 +314,8 @@ export const submitApplicationForm = async (formData, stallInfo) => {
     return {
       success: true,
       applicationId: applicationId,
+      signatureUploaded: !!signatureUrl,
+      signatureUrl: signatureUrl,
     };
   } catch (error) {
     console.error("Supabase submission error:", error);

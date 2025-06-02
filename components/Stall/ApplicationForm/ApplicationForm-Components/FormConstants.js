@@ -5,7 +5,6 @@ export const civilStatusOptions = [
   "Widowed",
   "Divorced",
   "Separated",
-  "Annulled",
 ];
 
 export const educationOptions = [

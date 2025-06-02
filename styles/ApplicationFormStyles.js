@@ -208,6 +208,118 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  // Add these to your existing styles
+  // Signature styles
+  signatureButton: {
+    backgroundColor: "#f8f9fa",
+    borderWidth: 2,
+    borderColor: "#007AFF",
+    borderStyle: "dashed",
+    borderRadius: 8,
+    padding: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  signatureButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  signaturePreview: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+  },
+  signatureImage: {
+    width: "100%",
+    height: 100,
+    backgroundColor: "white",
+    borderRadius: 4,
+  },
+  changeButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  changeButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+
+  // Location styles
+  locationButton: {
+    backgroundColor: "#f8f9fa",
+    borderWidth: 2,
+    borderColor: "#28a745",
+    borderStyle: "dashed",
+    borderRadius: 8,
+    padding: 20,
+    alignItems: "center",
+  },
+  locationButtonText: {
+    color: "#28a745",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  locationPreview: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    padding: 15,
+    alignItems: "center",
+  },
+  locationText: {
+    fontSize: 14,
+    color: "#333",
+    textAlign: "center",
+  },
+
+  // Modal styles
+  signatureModal: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
+  signatureHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 50,
+    backgroundColor: "white",
+  },
+  signatureTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  signatureControls: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  clearButton: {
+    backgroundColor: "#dc3545",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  clearButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  cancelButton: {
+    backgroundColor: "#6c757d",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  cancelButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
+  },
 });
 
 export default styles;

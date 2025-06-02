@@ -24,13 +24,13 @@ const StallCard = ({ item, handleViewImage }) => {
             <Text style={styles.applyText}>APPLY NOW!</Text>
           </TouchableOpacity>
         );
-      case "locked":
+      case "Countdown":
         return (
           <TouchableOpacity style={styles.lockButton} disabled>
             <Text style={styles.lockText}>🔒 LOCK</Text>
           </TouchableOpacity>
         );
-      case "raffle":
+      case "Raffle":
         return (
           <TouchableOpacity style={styles.raffleButton} disabled>
             <Text style={styles.raffleText}>RAFFLE ONGOING</Text>

@@ -1,30 +1,22 @@
 import React from "react";
-import { View, Text, TextInput } from "react-native";
-import  styles  from "../../../../styles/ApplicationFormStyles";
+import { View, Text } from "react-native";
+import LocationSelector from "../FinalDetailsStep/Location";
+import styles from "../../../../styles/ApplicationFormStyles";
 
 const FinalDetailsStep = ({
   formData,
   updateFormData,
   closeAllDropdowns,
+  userId, // Add this prop for database operations
 }) => {
   return (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Final Details</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name & Signature of Applicant"
-        value={formData.applicantSignature}
-        onChangeText={(text) => updateFormData("applicantSignature", text)}
-        onFocus={closeAllDropdowns}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="House Location"
-        value={formData.houseLocation}
-        onChangeText={(text) => updateFormData("houseLocation", text)}
-        onFocus={closeAllDropdowns}
+      {/* Location Section */}
+      <LocationSelector
+        formData={formData}
+        updateFormData={updateFormData}
       />
     </View>
   );

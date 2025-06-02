@@ -60,6 +60,28 @@ export const useDocumentUpload = (userFullname) => {
     }
   };
 
+  // New function to convert base64 to blob
+  const base64ToBlob = (base64Data) => {
+    try {
+      // Remove data URL prefix if present
+      const base64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      // Convert base64 to binary
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], { type: 'image/png' });
+    } catch (error) {
+      console.error('Error converting base64 to blob:', error);
+      throw error;
+    }
+  };
+
   const testNetworkConnectivity = async () => {
     try {
       console.log("Testing network connectivity...");
@@ -137,15 +159,25 @@ export const useDocumentUpload = (userFullname) => {
       )}_${timestamp}.${extension}`;
       const filePath = `${userFolderName}/${filename}`;
 
-      try {
-        console.log("Attempting upload with fetch method...");
+      console.log(`Uploading to path: ${filePath}`);
 
-        const response = await fetch(documentData.uri);
-        if (!response.ok) {
-          throw new Error(`Failed to read file: ${response.status}`);
+      try {
+        let blob;
+        
+        // Handle base64 data (for signatures)
+        if (documentData.isBase64) {
+          console.log("Processing base64 data...");
+          blob = documentData.blob || base64ToBlob(documentData.uri);
+        } else {
+          // Handle regular file URI
+          console.log("Attempting upload with fetch method...");
+          const response = await fetch(documentData.uri);
+          if (!response.ok) {
+            throw new Error(`Failed to read file: ${response.status}`);
+          }
+          blob = await response.blob();
         }
 
-        const blob = await response.blob();
         console.log("Blob created, size:", blob.size);
 
         const { data: fileData, error: fileError } = await supabase.storage
@@ -165,6 +197,7 @@ export const useDocumentUpload = (userFullname) => {
           .from("documents-image")
           .getPublicUrl(filePath);
 
+        console.log(`Upload successful for ${documentLabel}`);
         return {
           success: true,
           publicUrl: urlData.publicUrl,
@@ -172,31 +205,37 @@ export const useDocumentUpload = (userFullname) => {
           filePath: filePath,
         };
       } catch (blobError) {
-        console.log("Blob method failed, trying FormData method:", blobError.message);
+        // Only try FormData method for non-base64 data
+        if (!documentData.isBase64) {
+          console.log("Blob method failed, trying FormData method:", blobError.message);
 
-        const formData = await createFormData(documentData, filename);
+          const formData = await createFormData(documentData, filename);
 
-        const { data: fileData, error: fileError } = await supabase.storage
-          .from("documents-image")
-          .upload(filePath, formData, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+          const { data: fileData, error: fileError } = await supabase.storage
+            .from("documents-image")
+            .upload(filePath, formData, {
+              cacheControl: "3600",
+              upsert: false,
+            });
 
-        if (fileError) {
-          throw new Error(`Upload failed: ${fileError.message}`);
+          if (fileError) {
+            throw new Error(`Upload failed: ${fileError.message}`);
+          }
+
+          const { data: urlData } = supabase.storage
+            .from("documents-image")
+            .getPublicUrl(filePath);
+
+          return {
+            success: true,
+            publicUrl: urlData.publicUrl,
+            filename: filename,
+            filePath: filePath,
+          };
+        } else {
+          // For base64 data, re-throw the original error
+          throw blobError;
         }
-
-        const { data: urlData } = supabase.storage
-          .from("documents-image")
-          .getPublicUrl(filePath);
-
-        return {
-          success: true,
-          publicUrl: urlData.publicUrl,
-          filename: filename,
-          filePath: filePath,
-        };
       }
     } catch (error) {
       console.error("Upload error details:", error);
@@ -210,8 +249,12 @@ export const useDocumentUpload = (userFullname) => {
   const updateDocumentsTable = async (documentType, fileUrl) => {
     try {
       const docConfig = documentTypes.find((d) => d.key === documentType);
-      if (!docConfig || !userFullname) {
-        throw new Error("Invalid document type or user not found");
+      if (!docConfig && documentType !== 'applicant_signature') {
+        throw new Error("Invalid document type");
+      }
+      
+      if (!userFullname) {
+        throw new Error("User not found");
       }
 
       const { data: existingDoc } = await supabase
@@ -221,8 +264,15 @@ export const useDocumentUpload = (userFullname) => {
         .single();
 
       const updateData = {};
-      updateData[docConfig.column] = fileUrl;
-      updateData[`${docConfig.column}_uploaded_at`] = new Date().toISOString();
+      
+      // Handle signature uploads separately
+      if (documentType === 'applicant_signature') {
+        updateData['applicant_signature'] = fileUrl;
+        updateData['applicant_signature_uploaded_at'] = new Date().toISOString();
+      } else {
+        updateData[docConfig.column] = fileUrl;
+        updateData[`${docConfig.column}_uploaded_at`] = new Date().toISOString();
+      }
 
       let result;
       if (existingDoc) {
@@ -258,5 +308,6 @@ export const useDocumentUpload = (userFullname) => {
     getFileExtension,
     extractFilePathFromUrl,
     createFormData,
+    base64ToBlob,
   };
 };

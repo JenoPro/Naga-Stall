@@ -97,6 +97,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
+  filterBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  autoRefreshButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 10,
+    minWidth: 70,
+    alignItems: "center",
+  },
+  autoRefreshText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 5,
+    backgroundColor: "#f0f8ff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  refreshText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: "#2563eb",
+    fontStyle: "italic",
+  },
 });
 
 export default styles;
