@@ -29,7 +29,7 @@ export const getCurrentUser = async () => {
 export const isAuthenticated = async () => {
   try {
     const user = await getCurrentUser();
-    return !!user;
+    return !!user;        
   } catch (error) {
     return false;
   }

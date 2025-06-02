@@ -1,14 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import OverlayApplicationForm from "./ApplicationForm/OverlayApplicationForm"; // Import the overlay form
 
-const StallCard = ({ item, handleViewImage, onApplyNow }) => {
+const StallCard = ({ item, handleViewImage }) => {
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+
+  const handleApplyNow = () => {
+    setShowApplicationForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowApplicationForm(false);
+  };
+
   const renderStatusButton = (status) => {
     switch (status) {
       case "available":
         return (
           <TouchableOpacity
             style={styles.applyButton}
-            onPress={onApplyNow}
+            onPress={handleApplyNow}
           >
             <Text style={styles.applyText}>APPLY NOW!</Text>
           </TouchableOpacity>
@@ -47,51 +58,60 @@ const StallCard = ({ item, handleViewImage, onApplyNow }) => {
   };
 
   return (
-    <View style={styles.card}>
-      {/* Stall Image */}
-      <TouchableOpacity
-        onPress={() =>
-          item.originalImagePath && handleViewImage(item.originalImagePath)
-        }
-      >
-        {item.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.image}
-            onError={(e) => {
-              console.log(
-                `❌ Error loading image for stall #${item.stall_number}:`,
-                e.nativeEvent.error
-              );
-            }}
-          />
-        ) : (
-          <Image
-            source={require("../../assets/stall.png")}
-            style={styles.image}
-            onError={(e) => {
-              console.log(
-                `❌ Error loading default image for stall #${item.stall_number}:`,
-                e.nativeEvent.error
-              );
-            }}
-          />
-        )}
-      </TouchableOpacity>
-      
-      {/* Stall Information */}
-      <View style={styles.info}>
-        <View style={styles.headerRow}>
-          <Text style={styles.stallName}>STALL# {item.stall_number}</Text>
-          <Text style={styles.price}>{item.price} Php / Monthly</Text>
-        </View>
-        <Text style={styles.details}>{item.location}</Text>
-        <Text style={styles.details}>{item.size}</Text>
-        <View style={styles.statusContainer}>
-          {renderStatusButton(item.status)}
+    <>
+      <View style={styles.card}>
+        {/* Stall Image */}
+        <TouchableOpacity
+          onPress={() =>
+            item.originalImagePath && handleViewImage(item.originalImagePath)
+          }
+        >
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.image}
+              onError={(e) => {
+                console.log(
+                  `❌ Error loading image for stall #${item.stall_number}:`,
+                  e.nativeEvent.error
+                );
+              }}
+            />
+          ) : (
+            <Image
+              source={require("../../assets/stall.png")}
+              style={styles.image}
+              onError={(e) => {
+                console.log(
+                  `❌ Error loading default image for stall #${item.stall_number}:`,
+                  e.nativeEvent.error
+                );
+              }}
+            />
+          )}
+        </TouchableOpacity>
+        
+        {/* Stall Information */}
+        <View style={styles.info}>
+          <View style={styles.headerRow}>
+            <Text style={styles.stallName}>STALL# {item.stall_number}</Text>
+            <Text style={styles.price}>{item.price} Php / Monthly</Text>
+          </View>
+          <Text style={styles.details}>{item.location}</Text>
+          <Text style={styles.details}>{item.size}</Text>
+          <View style={styles.statusContainer}>
+            {renderStatusButton(item.status)}
+          </View>
         </View>
       </View>
-    </View>
+
+      {/* Overlay Application Form */}
+      <OverlayApplicationForm
+        visible={showApplicationForm}
+        onClose={handleCloseForm}
+        stallInfo={item}
+      />
+    </>
   );
 };
 

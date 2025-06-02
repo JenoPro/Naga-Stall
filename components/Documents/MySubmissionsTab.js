@@ -74,18 +74,20 @@ const MySubmissionsTab = ({ userFullname }) => {
         const docsObj = {};
         documentTypes.forEach((docType) => {
           const dbValue = data[docType.column];
+          // Get individual upload timestamp for each document
           const uploadTimestamp = data[`${docType.column}_uploaded_at`];
-
+          
           if (dbValue) {
             docsObj[docType.key] = {
               id: data.documentId,
               filename: dbValue,
               fileUrl: dbValue,
+              // Use individual upload timestamp if available, fallback to created_at
               uploadedAt: uploadTimestamp || data.created_at,
-              formattedDate: formatDateToMMDDYY(
-                uploadTimestamp || data.created_at
-              ),
               status: "uploaded",
+              label: docType.label,
+              // Add date only for display
+              uploadDate: getDateOnly(uploadTimestamp || data.created_at),
             };
           }
         });
