@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
-import OverlayApplicationForm from "./ApplicationForm/OverlayApplicationForm"; // Import the overlay form
+import OverlayApplicationForm from "./ApplicationForm/OverlayApplicationForm";
 
-const StallCard = ({ item, handleViewImage }) => {
+const StallCard = ({ item, handleViewImage, onApplicationSuccess }) => {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   const handleApplyNow = () => {
@@ -13,8 +13,26 @@ const StallCard = ({ item, handleViewImage }) => {
     setShowApplicationForm(false);
   };
 
-  const renderStatusButton = (status) => {
-    switch (status) {
+  const handleApplicationSubmitted = () => {
+    setShowApplicationForm(false);
+    // Call parent function to refresh data
+    if (onApplicationSuccess) {
+      onApplicationSuccess();
+    }
+  };
+
+  const renderStatusButton = () => {
+    // Check if user has already applied to this stall
+    if (item.hasUserApplied) {
+      return (
+        <TouchableOpacity style={styles.appliedButton} disabled>
+          <Text style={styles.appliedText}>ALREADY APPLIED</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    // Show button based on stall status
+    switch (item.status) {
       case "available":
         return (
           <TouchableOpacity
@@ -34,18 +52,6 @@ const StallCard = ({ item, handleViewImage }) => {
         return (
           <TouchableOpacity style={styles.raffleButton} disabled>
             <Text style={styles.raffleText}>RAFFLE ONGOING</Text>
-          </TouchableOpacity>
-        );
-      case "applied":
-        return (
-          <TouchableOpacity style={styles.appliedButton} disabled>
-            <Text style={styles.appliedText}>ALREADY APPLIED</Text>
-          </TouchableOpacity>
-        );
-      case "approved":
-        return (
-          <TouchableOpacity style={styles.approvedButton} disabled>
-            <Text style={styles.approvedText}>APPROVED</Text>
           </TouchableOpacity>
         );
       default:
@@ -100,7 +106,7 @@ const StallCard = ({ item, handleViewImage }) => {
           <Text style={styles.details}>{item.location}</Text>
           <Text style={styles.details}>{item.size}</Text>
           <View style={styles.statusContainer}>
-            {renderStatusButton(item.status)}
+            {renderStatusButton()}
           </View>
         </View>
       </View>
@@ -109,6 +115,7 @@ const StallCard = ({ item, handleViewImage }) => {
       <OverlayApplicationForm
         visible={showApplicationForm}
         onClose={handleCloseForm}
+        onApplicationSubmitted={handleApplicationSubmitted}
         stallInfo={item}
       />
     </>
@@ -195,16 +202,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   appliedText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  approvedButton: {
-    backgroundColor: "#4c9e4c",
-    paddingVertical: 8,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  approvedText: {
     color: "#fff",
     fontWeight: "bold",
   },

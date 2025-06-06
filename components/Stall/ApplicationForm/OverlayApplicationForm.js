@@ -23,7 +23,7 @@ import { civilStatusOptions, educationOptions, initialFormData } from "./Applica
 // Import styles
 import  styles  from "../../../styles/ApplicationFormStyles";
 
-const OverlayApplicationForm = ({ visible, onClose, stallInfo }) => {
+const OverlayApplicationForm = ({ visible, onClose, stallInfo, onSubmitSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [userFullname, setUserFullname] = useState("");
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -86,8 +86,17 @@ const OverlayApplicationForm = ({ visible, onClose, stallInfo }) => {
 
       Alert.alert(
         "Success",
-        `Application submitted successfully! Reference ID: ${result.applicationId}`,
-        [{ text: "OK", onPress: onClose }]
+        `Application submitted successfully!`,
+        [{ 
+          text: "OK", 
+          onPress: () => {
+            onClose();
+            // Call the refresh callback if provided
+            if (onSubmitSuccess) {
+              onSubmitSuccess();
+            }
+          }
+        }]
       );
     }
     // Error handling is done inside submitApplicationForm

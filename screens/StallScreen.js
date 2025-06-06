@@ -32,7 +32,6 @@ import {
 import {
   handleNotificationToggle,
   handleLogout,
-  handleApplyNow,
 } from "../utils/actionHandlers";
 
 // Import styles
@@ -44,7 +43,7 @@ export default function StallScreen() {
   const [notificationStatus, setNotificationStatus] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
-  const [sortBy, setSortBy] = useState("Stall"); // Default sorting by Stall
+  const [sortBy, setSortBy] = useState("Stall");
   const [stalls, setStalls] = useState([]);
   const [sortedStalls, setSortedStalls] = useState([]);
   const [userFullname, setUserFullname] = useState("");
@@ -69,7 +68,6 @@ export default function StallScreen() {
 
     if (criteria === "Stall") {
       sorted.sort((a, b) => {
-        // Extract numbers from stall_number for numeric sorting
         const aNum = parseInt(String(a.stall_number).replace(/\D/g, ""));
         const bNum = parseInt(String(b.stall_number).replace(/\D/g, ""));
         return aNum - bNum;
@@ -104,6 +102,14 @@ export default function StallScreen() {
     }
   };
 
+  // Handle application success - refresh user applications
+  const handleApplicationSuccess = async () => {
+    console.log("🔄 Application submitted, refreshing data...");
+    if (userFullname && stalls.length > 0) {
+      await checkUserApplications(stalls, setStalls, setUserStallNumber, userFullname);
+    }
+  };
+
   // Handle tab navigation
   const handleTabPress = (tabName) => {
     if (tabName === "logout") {
@@ -130,7 +136,6 @@ export default function StallScreen() {
     const newStatus = !notificationStatus;
     setNotificationStatus(newStatus);
     
-    // Show popup message
     setPopupMessage(
       newStatus
         ? "Notifications turned ON for stalls"
@@ -159,14 +164,15 @@ export default function StallScreen() {
     loadData();
   }, []);
 
-  // Check for user applications when stalls are loaded
+  // Check for user applications when stalls and user data are loaded
   useEffect(() => {
-    if (stalls.length > 0) {
-      checkUserApplications(stalls, setStalls, setUserStallNumber, userEmail);
+    if (stalls.length > 0 && userFullname) {
+      console.log("🔄 Checking applications for user:", userFullname);
+      checkUserApplications(stalls, setStalls, setUserStallNumber, userFullname);
     }
-  }, [stalls, userEmail]);
+  }, [stalls.length, userFullname]);
 
-  // Update sorted stalls when sort criteria changes
+  // Update sorted stalls when sort criteria or stalls change
   useEffect(() => {
     sortStalls(sortBy, stalls);
   }, [sortBy, stalls]);
@@ -185,14 +191,12 @@ export default function StallScreen() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        {/* User Header - Reusing component */}
         <UserHeader 
           userFullname={userFullname} 
           userEmail={userEmail}
           stallNumber={userStallNumber} 
         />
 
-        {/* Filter Bar - Reusing component */}
         <FilterBar 
           sortBy={sortBy}
           notificationStatus={notificationStatus}
@@ -200,7 +204,6 @@ export default function StallScreen() {
           onFilterClick={handleFilterClick}
         />
 
-        {/* Stall Listings */}
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2563eb" />
@@ -217,7 +220,7 @@ export default function StallScreen() {
               <StallCard
                 item={item}
                 handleViewImage={handleViewImage}
-                onApplyNow={() => handleApplyNow(item, navigation)}
+                onApplicationSuccess={handleApplicationSuccess}
               />
             )}
             keyExtractor={(item) =>
@@ -228,7 +231,6 @@ export default function StallScreen() {
           />
         )}
 
-        {/* Modals */}
         <SortModal
           visible={sortModalVisible}
           sortBy={sortBy}
@@ -236,7 +238,6 @@ export default function StallScreen() {
           onClose={() => setSortModalVisible(false)}
         />
 
-        {/* NotificationPopup - Reusing component */}
         <NotificationPopup
           visible={showPopup}
           message={popupMessage}
@@ -249,7 +250,6 @@ export default function StallScreen() {
           onClose={() => setImageModalVisible(false)}
         />
 
-        {/* Bottom Navigation - Already reusing component */}
         <BottomNavigation activeTab={activeTab} onTabPress={handleTabPress} />
       </SafeAreaView>
     </SafeAreaProvider>

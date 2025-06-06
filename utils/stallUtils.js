@@ -3,13 +3,10 @@ import supabase from "../config/supabaseClient";
 // Get image URL from Supabase storage
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
-
   try {
-    // Make sure we're using the correct bucket name
     const { data } = supabase.storage
-      .from("stall-image") // Ensure this matches your bucket name exactly
+      .from("stall-image")
       .getPublicUrl(imagePath);
-
     console.log("Image URL generated:", data?.publicUrl);
     return data?.publicUrl;
   } catch (error) {
@@ -21,7 +18,6 @@ export const getImageUrl = (imagePath) => {
 // Fetch stalls from Supabase
 export const fetchStalls = async () => {
   try {
-    // Fetch stalls data from the Stall table
     const { data: stallsData, error } = await supabase
       .from("Stall")
       .select("*");
@@ -38,17 +34,13 @@ export const fetchStalls = async () => {
       return [];
     }
 
-    // Map database field names to component field names and get image URLs
     const mappedStalls = stallsData.map((stall) => {
-      // Get image URL with proper path handling
       let imagePath = stall.stallImage;
-      
-      // Handle potential path inconsistencies
-      // If the path doesn't start with "stall/", add it (assuming images are in a "stall" folder)
+
       if (imagePath && !imagePath.startsWith("stalls/")) {
         imagePath = `stalls/${imagePath}`;
       }
-      
+
       const imageUrl = getImageUrl(imagePath);
 
       return {
@@ -57,16 +49,17 @@ export const fetchStalls = async () => {
         location: stall.stallLocation,
         size: stall.size,
         price: stall.rentalPrice,
-        status: stall.status || "available", // Set default status if not provided
+        status: stall.status || "available",
         about: stall.stallAbout,
         imageUrl: imageUrl,
         originalImagePath: stall.stallImage,
         created_at: stall.created_at,
         raffle_date: stall.raffleDate,
+        hasUserApplied: false, // Initialize as false
       };
     });
 
-    console.log("✅ Stalls with images:", mappedStalls);
+    console.log("✅ Mapped stalls:", mappedStalls);
     return mappedStalls;
   } catch (error) {
     console.log("❌ Error in fetchStalls:", error);
@@ -75,17 +68,25 @@ export const fetchStalls = async () => {
 };
 
 // Function to check if user has already applied for any stall
-export const checkUserApplications = async (stalls, setStalls, setUserStallNumber, userEmail) => {
+export const checkUserApplications = async (
+  stalls,
+  setStalls,
+  setUserStallNumber,
+  userFullName
+) => {
   try {
-    if (!userEmail) return;
+    if (!userFullName) {
+      console.log("❌ No userFullName provided to checkUserApplications");
+      return;
+    }
 
-    console.log("Checking applications for email:", userEmail);
+    console.log("🔍 Checking applications for user:", userFullName);
 
     // Check if the user has any stall applications
     const { data, error } = await supabase
-      .from("StallApplication")
+      .from("Application")
       .select("stallNo, status")
-      .eq("applicant_email", userEmail);
+      .eq("Applicants_Name", userFullName);
 
     if (error) {
       console.log("❌ Error checking applications:", error);
@@ -94,28 +95,83 @@ export const checkUserApplications = async (stalls, setStalls, setUserStallNumbe
 
     console.log("✅ User applications data:", data);
 
-    // If user has applications, update the stalls status accordingly
+    // Log all stallNo values for debugging
     if (data && data.length > 0) {
-      setStalls((currentStalls) => {
-        return currentStalls.map((stall) => {
-          const application = data.find(
-            (app) => app.stallNo === stall.stall_number
-          );
-          if (application) {
-            // If the application is approved, update user's stall number
-            if (application.status === "approved") {
-              setUserStallNumber(stall.stall_number);
-            }
-            return {
-              ...stall,
-              status:
-                application.status === "approved" ? "approved" : "applied",
-            };
-          }
-          return stall;
-        });
+      console.log("📝 Found applications with stallNo values:");
+      data.forEach((app, index) => {
+        console.log(
+          `   Application ${index + 1}: stallNo = "${app.stallNo}", status = "${
+            app.status
+          }"`
+        );
       });
     }
+
+    // Update stalls status based on user applications
+    setStalls((currentStalls) => {
+      console.log("🔍 Comparing with stalls:");
+      currentStalls.forEach((stall, index) => {
+        console.log(
+          `   Stall ${index + 1}: id = "${stall.id}", stall_number = "${stall.stall_number}"`
+        );
+      });
+
+      const updatedStalls = currentStalls.map((stall) => {
+        const application = data?.find((app) => {
+          // Compare with stall ID (primary key) which should match the stored stallNo
+          if (String(app.stallNo) === String(stall.id)) {
+            return true;
+          }
+          
+          // Fallback: also check against stall_number in case of inconsistency
+          if (String(app.stallNo) === String(stall.stall_number)) {
+            return true;
+          }
+
+          // Additional fallback: try numeric comparison
+          const appStallNum = parseInt(String(app.stallNo));
+          const stallId = parseInt(String(stall.id));
+          const stallNum = parseInt(String(stall.stall_number));
+          
+          if (!isNaN(appStallNum) && !isNaN(stallId) && appStallNum === stallId) {
+            return true;
+          }
+          
+          if (!isNaN(appStallNum) && !isNaN(stallNum) && appStallNum === stallNum) {
+            return true;
+          }
+
+          return false;
+        });
+
+        if (application) {
+          console.log(
+            `🎯 Found application for stall ${stall.stall_number} (ID: ${stall.id}): ${application.status}`
+          );
+
+          // User has applied to this stall
+          return {
+            ...stall,
+            hasUserApplied: true,
+          };
+        }
+
+        // User has not applied to this stall
+        return {
+          ...stall,
+          hasUserApplied: false,
+        };
+      });
+
+      console.log("✅ Updated stalls with user application status:");
+      updatedStalls.forEach((stall) => {
+        console.log(
+          `   Stall ${stall.stall_number} (ID: ${stall.id}): hasUserApplied = ${stall.hasUserApplied}`
+        );
+      });
+
+      return updatedStalls;
+    });
   } catch (error) {
     console.log("❌ Error in checkUserApplications:", error);
   }
