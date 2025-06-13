@@ -16,4 +16,4 @@ const NetworkTroubleshooting = () => {
   );
 };
 
-export default NetworkTroubleshooting;
+export { NetworkTroubleshooting };

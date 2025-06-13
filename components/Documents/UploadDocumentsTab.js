@@ -6,10 +6,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Text,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import styles from "../../styles/DocumentsScreenStyles";
-import  DocumentItem from "./Components-Submissiontab/DocumentItem";
+import { DocumentItem } from "./Components-Submissiontab/DocumentItem";
 import { NetworkTroubleshooting } from "./Components-Submissiontab/NetworkTroubleshooting";
 import { useDocumentUpload } from "./Components-Submissiontab/useDocumentUpload";
 import { useDocumentState } from "./Components-Submissiontab/useDocumentState";
@@ -41,12 +42,35 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
     }
   }, [userFullname]);
 
+  // Cross-platform alert function
+  const showAlert = (title, message, buttons = []) => {
+    if (Platform.OS === 'web') {
+      // For web, use browser confirm/alert
+      if (buttons.length > 1) {
+        const confirmed = window.confirm(`${title}\n\n${message}`);
+        const confirmButton = buttons.find(btn => btn.style === 'destructive' || btn.text === 'Replace');
+        if (confirmed && confirmButton && confirmButton.onPress) {
+          confirmButton.onPress();
+        }
+      } else {
+        window.alert(`${title}\n\n${message}`);
+      }
+    } else {
+      // For mobile, use React Native Alert
+      if (buttons.length > 0) {
+        Alert.alert(title, message, buttons);
+      } else {
+        Alert.alert(title, message);
+      }
+    }
+  };
+
   const pickDocument = async (documentType) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
+        showAlert(
           "Permission Denied",
           "We need media library permissions to upload documents"
         );
@@ -78,19 +102,19 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
       }
     } catch (error) {
       console.error("Error picking document:", error);
-      Alert.alert("Error", `Failed to select document: ${error.message}`);
+      showAlert("Error", `Failed to select document: ${error.message}`);
     }
   };
 
   const handleSingleUpload = async (documentType, documentLabel) => {
     const documentData = documents[documentType];
     if (!documentData) {
-      Alert.alert("No Document", "Please select a document first.");
+      showAlert("No Document", "Please select a document first.");
       return;
     }
 
     if (!isConnected) {
-      Alert.alert(
+      showAlert(
         "No Internet",
         "Please check your internet connection and try again."
       );
@@ -100,7 +124,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
     const hasExistingDoc = uploadedDocuments[documentType];
 
     if (hasExistingDoc) {
-      Alert.alert(
+      showAlert(
         "Replace Document",
         `You already have a ${documentLabel} uploaded. Do you want to replace it?`,
         [
@@ -145,7 +169,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
         if (dbResult.success) {
           const action = uploadedDocuments[documentType] ? "replaced" : "uploaded";
-          Alert.alert("Success", `${documentLabel} ${action} successfully!`);
+          showAlert("Success", `${documentLabel} ${action} successfully!`);
 
           setDocuments((prev) => ({ ...prev, [documentType]: null }));
           await loadUploadedDocuments();
@@ -154,7 +178,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
             ...prev,
             [documentType]: { ...prev[documentType], status: "failed" },
           }));
-          Alert.alert(
+          showAlert(
             "Upload Failed",
             `File uploaded but database update failed: ${dbResult.error}`
           );
@@ -164,7 +188,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
           ...prev,
           [documentType]: { ...prev[documentType], status: "failed" },
         }));
-        Alert.alert("Upload Failed", uploadResult.error);
+        showAlert("Upload Failed", uploadResult.error);
       }
     } catch (error) {
       console.error("Upload error:", error);
@@ -172,7 +196,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
         ...prev,
         [documentType]: { ...prev[documentType], status: "failed" },
       }));
-      Alert.alert("Error", `Failed to upload document: ${error.message}`);
+      showAlert("Error", `Failed to upload document: ${error.message}`);
     } finally {
       setUploadingDocs((prev) => ({ ...prev, [documentType]: false }));
     }
@@ -180,13 +204,13 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
   const handleSubmitAllDocuments = async () => {
     if (!isConnected || !userFullname) {
-      Alert.alert("Error", "Please check your connection and try again.");
+      showAlert("Error", "Please check your connection and try again.");
       return;
     }
 
     const networkTest = await testNetworkConnectivity();
     if (!networkTest.success) {
-      Alert.alert(
+      showAlert(
         "Connection Error",
         `Network issue detected: ${networkTest.error}\n\nPlease check your internet connection and try again.`
       );
@@ -200,7 +224,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
     if (missingDocs.length > 0) {
       const missingLabels = missingDocs.map((doc) => doc.label).join(", ");
-      Alert.alert("Missing Required Documents", `Please upload: ${missingLabels}`);
+      showAlert("Missing Required Documents", `Please upload: ${missingLabels}`);
       return;
     }
 
@@ -209,7 +233,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
     );
 
     if (docsToUpload.length === 0) {
-      Alert.alert("No Documents", "No new documents to upload.");
+      showAlert("No Documents", "No new documents to upload.");
       return;
     }
 
@@ -249,7 +273,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
         if (failedDocs.length > 0) {
           message += `\n\nFailed to upload: ${failedDocs.join(", ")}`;
         }
-        Alert.alert("Upload Complete", message);
+        showAlert("Upload Complete", message);
 
         setDocuments({
           awardPaper: null,
@@ -263,14 +287,14 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
         });
         await loadUploadedDocuments();
       } else {
-        Alert.alert(
+        showAlert(
           "Upload Failed",
           "Failed to upload documents. Please check your connection and try again."
         );
       }
     } catch (error) {
       console.error("Bulk upload error:", error);
-      Alert.alert("Error", `Failed to upload documents: ${error.message}`);
+      showAlert("Error", `Failed to upload documents: ${error.message}`);
     } finally {
       setIsLoading(false);
     }

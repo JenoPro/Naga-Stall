@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ const MySubmissionsTab = ({ userFullname }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [imageLoading, setImageLoading] = useState({});
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
 
   // Get screen dimensions for modal
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -33,15 +34,8 @@ const MySubmissionsTab = ({ userFullname }) => {
     { key: "healthCardYellowCard", label: "Health Card/Yellow Card", column: "HealthCard", required: true },
   ];
 
-  // Load uploaded documents when user data is available
-  useEffect(() => {
-    if (userFullname) {
-      loadUploadedDocuments();
-    }
-  }, [userFullname]);
-
   // Helper function to format date only (no time)
-  const getDateOnly = (timestamp) => {
+  const getDateOnly = useCallback((timestamp) => {
     if (!timestamp) return "Unknown date";
     
     try {
@@ -55,9 +49,12 @@ const MySubmissionsTab = ({ userFullname }) => {
       console.error("Error formatting date:", error);
       return "Invalid date";
     }
-  };
+  }, []);
 
-  const loadUploadedDocuments = async () => {
+  const loadUploadedDocuments = useCallback(async () => {
+    if (!userFullname || isLoadingDocuments) return;
+    
+    setIsLoadingDocuments(true);
     try {
       const { data, error } = await supabase
         .from("documents")
@@ -95,36 +92,45 @@ const MySubmissionsTab = ({ userFullname }) => {
       }
     } catch (error) {
       console.error("Error loading uploaded documents:", error);
+    } finally {
+      setIsLoadingDocuments(false);
     }
-  };
+  }, [userFullname, isLoadingDocuments, getDateOnly]); // Added all dependencies
 
-  const handleImagePress = (document) => {
+  // Load uploaded documents when user data is available
+  useEffect(() => {
+    if (userFullname) {
+      loadUploadedDocuments();
+    }
+  }, [userFullname, loadUploadedDocuments]); // Added loadUploadedDocuments as dependency
+
+  const handleImagePress = useCallback((document) => {
     setSelectedImage(document);
     setImageModalVisible(true);
-  };
+  }, []);
 
-  const handleImageLoadStart = (docKey) => {
+  const handleImageLoadStart = useCallback((docKey) => {
     setImageLoading(prev => ({ ...prev, [docKey]: true }));
-  };
+  }, []);
 
-  const handleImageLoadEnd = (docKey) => {
+  const handleImageLoadEnd = useCallback((docKey) => {
     setImageLoading(prev => ({ ...prev, [docKey]: false }));
-  };
+  }, []);
 
-  const handleImageError = (docKey, docLabel) => {
+  const handleImageError = useCallback((docKey, docLabel) => {
     setImageLoading(prev => ({ ...prev, [docKey]: false }));
     Alert.alert(
       "Image Load Error",
       `Failed to load ${docLabel}. The image may be corrupted or the link is invalid.`
     );
-  };
+  }, []);
 
-  const closeImageModal = () => {
+  const closeImageModal = useCallback(() => {
     setImageModalVisible(false);
     setSelectedImage(null);
-  };
+  }, []);
 
-  const renderDocumentItem = (docConfig) => {
+  const renderDocumentItem = useCallback((docConfig) => {
     const uploadedDoc = uploadedDocuments[docConfig.key];
     if (!uploadedDoc) return null;
 
@@ -179,7 +185,7 @@ const MySubmissionsTab = ({ userFullname }) => {
         </TouchableOpacity>
       </View>
     );
-  };
+  }, [uploadedDocuments, imageLoading, handleImagePress, handleImageLoadStart, handleImageLoadEnd, handleImageError]);
 
   return (
     <>

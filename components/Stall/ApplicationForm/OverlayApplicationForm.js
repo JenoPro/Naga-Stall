@@ -10,18 +10,18 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import separated components
-import PersonalInfoStep  from "./ApplicationForm-Components/PersonalInfoStep";
-import SpouseInfoStep  from "./ApplicationForm-Components/SpouseInfoStep";
-import BusinessInfoStep  from "./ApplicationForm-Components/BusinessInfoStep";
-import FinalDetailsStep  from "./ApplicationForm-Components/FinalDetailsStep";
-import FormNavigation  from "./ApplicationForm-Components/FormNavigation";
+import PersonalInfoStep from "./ApplicationForm-Components/PersonalInfoStep";
+import SpouseInfoStep from "./ApplicationForm-Components/SpouseInfoStep";
+import BusinessInfoStep from "./ApplicationForm-Components/BusinessInfoStep";
+import FinalDetailsStep from "./ApplicationForm-Components/FinalDetailsStep";
+import FormNavigation from "./ApplicationForm-Components/FormNavigation";
 
 // Import services and constants
 import { submitApplicationForm } from "./ApplicationForm-Components/FormSubmissionService";
 import { civilStatusOptions, educationOptions, initialFormData } from "./ApplicationForm-Components/FormConstants";
 
 // Import styles
-import  styles  from "../../../styles/ApplicationFormStyles";
+import styles from "../../../styles/ApplicationFormStyles";
 
 const OverlayApplicationForm = ({ visible, onClose, stallInfo, onSubmitSuccess }) => {
   const [currentStep, setCurrentStep] = useState(1);

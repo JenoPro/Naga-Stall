@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, Modal, StyleSheet, ActivityIndicator } from "react-native";
+import { supabase } from "../../config/supabaseClient";
 
 const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
   const [stallStatuses, setStallStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // Static price option
-  const priceOption = "Price";
 
   // Fetch stall statuses when modal becomes visible
   useEffect(() => {
@@ -21,43 +19,53 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
     setError(null);
     
     try {
-      // Fetch distinct statuses from your stall table
-      const response = await fetch('/api/Stall/status');
+      // Fetch distinct statuses from Stall table
+      const { data: stallData, error: stallError } = await supabase
+        .from('Stall')
+        .select('status')
+        .not('status', 'is', null);
+
+      if (stallError) throw stallError;
+
+      // Get unique statuses from stalls
+      const stallStatuses = stallData?.map(item => item.status) || [];
+      const uniqueStatuses = [...new Set(stallStatuses)]
+        .filter(status => status && typeof status === 'string')
+        .map(status => {
+          // Capitalize first letter and keep the rest as is
+          return status.charAt(0).toUpperCase() + status.slice(1);
+        });
+
+      // Define the correct order: Available -> Applied -> Raffle -> Countdown
+      const statusOrder = ['Available', 'Applied', 'Raffle', 'Countdown'];
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch stall statuses');
-      }
-      
-      const data = await response.json();
-      
-      // Extract unique statuses from the response
-      // Expecting: { statuses: ['available', 'countdown', 'raffle', ...] }
-      const uniqueStatuses = data.statuses || [];
-      
-      // Filter and format valid statuses
-      const validStatuses = uniqueStatuses
-        .filter(status => status && ['Available', 'Countdown', 'Raffle'].includes(status.toLowerCase()))
-        .map(status => status.charAt(0).toUpperCase() + status.slice(1).toLowerCase())
-        .sort(); // Sort alphabetically for consistent order
-      
-      // Ensure we have at least the basic statuses
-      const defaultStatuses = ['Available', 'Countdown', 'Raffle'];
-      const finalStatuses = validStatuses.length > 0 ? validStatuses : defaultStatuses;
-      
-      setStallStatuses(finalStatuses);
+      // Sort statuses according to your preferred order
+      const sortedStatuses = statusOrder.filter(status => 
+        uniqueStatuses.includes(status)
+      );
+
+      // Add any other statuses that might exist but aren't in our predefined order
+      const otherStatuses = uniqueStatuses
+        .filter(status => !statusOrder.includes(status))
+        .sort();
+
+      const finalStatuses = [...sortedStatuses, ...otherStatuses];
+
+      // Set the statuses or fallback to defaults with correct order
+      setStallStatuses(finalStatuses.length > 0 ? finalStatuses : ['Available', 'Applied', 'Raffle', 'Countdown']);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching stall statuses:', err);
       
-      // Fallback to default statuses if API fails
-      setStallStatuses(['Available', 'Countdown', 'Raffle']);
+      // Fallback to default statuses with correct order if API fails
+      setStallStatuses(['Available', 'Applied', 'Raffle', 'Countdown']);
     } finally {
       setLoading(false);
     }
   };
 
-  // Combine status options with price option
-  const sortOptions = [...stallStatuses, priceOption];
+  // Combine status options with other sort options
+  const sortOptions = [...stallStatuses, 'Stall', 'Price', 'Location'];
 
   const renderContent = () => {
     if (loading) {
@@ -93,7 +101,10 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
               styles.sortOption,
               sortBy === option && styles.activeSortOption,
             ]}
-            onPress={() => onSelectOption(option)}
+            onPress={() => {
+              onSelectOption(option);
+              onClose(); // Close modal after selection
+            }}
           >
             <Text
               style={[
@@ -121,9 +132,13 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
         activeOpacity={1}
         onPress={onClose}
       >
-        <View style={styles.sortModalContainer}>
+        <TouchableOpacity
+          style={styles.sortModalContainer}
+          activeOpacity={1}
+          onPress={() => {}} // Prevent modal from closing when tapping inside
+        >
           {renderContent()}
-        </View>
+        </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
   );
@@ -141,6 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: "80%",
+    maxWidth: 300,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -159,13 +175,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 5,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   activeSortOption: {
     backgroundColor: "#e6f2ff",
+    borderColor: "#2563eb",
   },
   sortOptionText: {
     fontSize: 16,
     textAlign: "center",
+    color: "#333",
   },
   activeSortOptionText: {
     color: "#2563eb",

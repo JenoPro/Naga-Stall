@@ -1,14 +1,63 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, Platform, Dimensions } from "react-native";
+import LiveRaffle from "./LiveRaffle"; // Adjust the import path as needed
 
-const StallCard = ({ item }) => {
+const { width: screenWidth } = Dimensions.get('window');
+const isWeb = Platform.OS === 'web';
+const isLargeScreen = screenWidth >= 768;
+
+const StallCard = ({ 
+  item,
+  // New props for LiveRaffle integration
+  userRole = "viewer", // "admin" or "viewer"
+  userFullName = "Anonymous",
+  userEmail = "",
+  participants = [],
+  timerRunning = false,
+  timerPaused = false,
+  getImageUrl = null,
+}) => {
   const [showCountdownModal, setShowCountdownModal] = useState(false);
+  const [showLiveRaffle, setShowLiveRaffle] = useState(false);
   const [timeLeft, setTimeLeft] = useState('');
   const [imageError, setImageError] = useState(false);
 
-  // Calculate time left for countdown
+  // Determine if we should use web layout
+  const shouldUseWebLayout = isWeb && isLargeScreen;
+
+  // Calculate responsive dimensions similar to first component
+  const getCardWidth = () => {
+    if (!shouldUseWebLayout) return '100%';
+    
+    // Calculate based on available content width (screen width - navbar - padding)
+    const availableWidth = screenWidth - 80 - 40; // navbar width + content padding
+    
+    // Use the full available width for columns
+    if (availableWidth >= 1400) {
+      // 4 columns with spacing
+      return (availableWidth / 4) - 16;
+    } else if (availableWidth >= 1200) {
+      // 3 columns with spacing
+      return (availableWidth / 3) - 16;
+    } else if (availableWidth >= 900) {
+      // 2 columns with spacing
+      return (availableWidth / 2) - 16;
+    }
+    // Single column
+    return availableWidth - 16;
+  };
+
+  const getImageHeight = () => {
+    if (!shouldUseWebLayout) return 120; // Mobile height
+    
+    // Smaller image height for web - similar to first component
+    const cardWidth = getCardWidth();
+    return Math.min(140, cardWidth * 0.5); // Reduced from 160px max
+  };
+
+  // Calculate time left for countdown - only when modal is open
   useEffect(() => {
-    if (item.status === 'countdown' && item.endTime) {
+    if (showCountdownModal && item.status === 'countdown' && item.endTime) {
       const calculateTimeLeft = () => {
         const now = new Date().getTime();
         const endTime = new Date(item.endTime).getTime();
@@ -37,11 +86,17 @@ const StallCard = ({ item }) => {
 
       return () => clearInterval(timer);
     }
-  }, [item.status, item.endTime]);
+  }, [showCountdownModal, item.status, item.endTime]);
 
   const handleCountdownPress = () => {
     if (item.status === 'countdown') {
       setShowCountdownModal(true);
+    }
+  };
+
+  const handleRafflePress = () => {
+    if (item.status === 'raffle') {
+      setShowLiveRaffle(true);
     }
   };
 
@@ -57,17 +112,24 @@ const StallCard = ({ item }) => {
     switch (status) {
       case "raffle":
         return (
-          <TouchableOpacity style={styles.raffleButton} disabled>
-            <Text style={styles.raffleText}>RAFFLE ONGOING</Text>
+          <TouchableOpacity 
+            style={[styles.raffleButton, shouldUseWebLayout && styles.webButton]} 
+            onPress={handleRafflePress}
+          >
+            <Text style={[styles.raffleText, shouldUseWebLayout && styles.webButtonText]}>
+              RAFFLE ONGOING
+            </Text>
           </TouchableOpacity>
         );
       case "countdown":
         return (
           <TouchableOpacity 
-            style={styles.countdownButton} 
+            style={[styles.countdownButton, shouldUseWebLayout && styles.webButton]} 
             onPress={handleCountdownPress}
           >
-            <Text style={styles.countdownText}>COUNTDOWN</Text>
+            <Text style={[styles.countdownText, shouldUseWebLayout && styles.webButtonText]}>
+              COUNTDOWN
+            </Text>
           </TouchableOpacity>
         );
       default:
@@ -89,7 +151,9 @@ const StallCard = ({ item }) => {
           
           <View style={styles.countdownContainer}>
             <Text style={styles.countdownLabel}>Time Remaining:</Text>
-            <Text style={styles.countdownTime}>{timeLeft}</Text>
+            <View style={styles.countdownTimeContainer}>
+              <Text style={styles.countdownTime}>{timeLeft || 'Loading...'}</Text>
+            </View>
           </View>
 
           {item.raffleDate && (
@@ -124,13 +188,26 @@ const StallCard = ({ item }) => {
 
   // Enhanced image rendering with better fallback
   const renderImage = () => {
+    const imageContainerStyle = [
+      styles.imageContainer,
+      shouldUseWebLayout && [
+        styles.webImageContainer,
+        { height: getImageHeight() }
+      ]
+    ];
+
+    const imageStyle = [
+      styles.image,
+      shouldUseWebLayout && styles.webImage
+    ];
+
     // If image error occurred or no imageUrl, show default
     if (imageError || !item.imageUrl) {
       return (
-        <View style={styles.imageContainer}>
+        <View style={imageContainerStyle}>
           <Image
             source={require('../../assets/stall.png')}
-            style={styles.image}
+            style={imageStyle}
             onError={(e) => {
               console.log(
                 `❌ Error loading default image for stall ${item.name}:`,
@@ -148,10 +225,10 @@ const StallCard = ({ item }) => {
     }
 
     return (
-      <View style={styles.imageContainer}>
+      <View style={imageContainerStyle}>
         <Image
           source={{ uri: item.imageUrl }}
-          style={styles.image}
+          style={imageStyle}
           onError={handleImageError}
           onLoad={() => {
             console.log(`✅ Successfully loaded image for stall ${item.name}`);
@@ -161,11 +238,19 @@ const StallCard = ({ item }) => {
     );
   };
 
+  // Dynamic card styles based on layout
+  const cardStyles = shouldUseWebLayout ? [
+    styles.card,
+    styles.webCard,
+    { 
+      width: getCardWidth(),
+      marginHorizontal: 8, // Reduced margin like first component
+      marginBottom: 16,    // Reduced margin like first component
+    }
+  ] : [styles.card, styles.mobileCard];
+
   return (
-    <View style={styles.card}>
-      {/* Stall Image */}
-      {renderImage()}
-      
+    <View style={cardStyles}>
       {/* Status badges */}
       {item.status === "raffle" && (
         <View style={styles.liveBadge}>
@@ -177,48 +262,125 @@ const StallCard = ({ item }) => {
           <Text style={styles.countdownBadgeText}>Countdown</Text>
         </View>
       )}
+
+      {/* Stall Image */}
+      {renderImage()}
       
-      <View style={styles.infoContainer}>
-        <View style={styles.stallNameContainer}>
-          <Text style={styles.stallName}>{item.name}</Text>
+      <View style={[styles.infoContainer, shouldUseWebLayout && styles.webInfoContainer]}>
+        {/* Content Container - Fixed height area for consistent layout */}
+        <View style={[styles.contentContainer, shouldUseWebLayout && styles.webContentContainer]}>
+          <View style={styles.stallNameContainer}>
+            <Text style={[styles.stallName, shouldUseWebLayout && styles.webStallName]}>
+              {item.name}
+            </Text>
+          </View>
+          <Text style={[styles.details, shouldUseWebLayout && styles.webDetails]}>
+            {item.location}
+          </Text>
+          {item.rentalPrice && (
+            <Text style={[styles.details, shouldUseWebLayout && styles.webDetails]}>
+              ₱{item.rentalPrice}
+            </Text>
+          )}
         </View>
-        <Text style={styles.details}>{item.location}</Text>
-        <Text style={styles.details}>{item.size}</Text>
-        {item.status === 'countdown' && timeLeft && (
-          <Text style={styles.timeLeftText}>⏰ {timeLeft}</Text>
-        )}
-        {renderStatusButton(item.status)}
+        
+        {/* Button Area - Always at bottom */}
+        <View style={styles.buttonArea}>
+          {renderStatusButton(item.status)}
+        </View>
       </View>
       
+      {/* Modals */}
       <CountdownModal />
+      
+      {/* LiveRaffle Modal */}
+      <LiveRaffle
+        visible={showLiveRaffle}
+        onClose={() => setShowLiveRaffle(false)}
+        stallData={item}
+        stallNo={item.name}
+        stallLocation={item.location}
+        stallSize={item.size}
+        rentalPrice={item.rentalPrice}
+        stallImage={item.imageUrl}
+        getImageUrl={getImageUrl}
+        participants={participants}
+        timerRunning={timerRunning}
+        timerPaused={timerPaused}
+        userRole={userRole}
+        userFullName={userFullName}
+        userEmail={userEmail}
+        stallId={item.id}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // Base card styles - CONSISTENT HEIGHT
   card: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    marginBottom: 15,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
     overflow: "hidden",
-    flexDirection: "row",
-    height: 120,
+    position: 'relative',
   },
+  
+  // Mobile card (horizontal layout) - FIXED HEIGHT
+  mobileCard: {
+    flexDirection: "row",
+    height: 120, // Fixed height for consistency
+    marginBottom: 12,
+  },
+  
+  // Web card (vertical layout) - CONSISTENT HEIGHT
+  webCard: {
+    flexDirection: "column",
+    minWidth: 240,
+    maxWidth: 320,
+    height: 300, // FIXED HEIGHT for all web cards
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: '#e0e0e0',
+    transition: Platform.OS === 'web' ? 'all 0.2s ease' : undefined,
+  },
+  
+  // Mobile image container
   imageContainer: {
-    width: "40%",
+    width: "35%",
     height: "100%",
     position: 'relative',
   },
+  
+  // Web image container - CONSISTENT HEIGHT
+  webImageContainer: {
+    width: "100%",
+    height: 140, // Fixed height instead of dynamic
+    position: 'relative',
+  },
+  
+  // Mobile image
   image: {
     width: "100%",
     height: "100%",
     resizeMode: 'cover',
   },
+  
+  // Web image
+  webImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: 'cover',
+    objectFit: 'cover',
+  },
+  
   noImageOverlay: {
     position: 'absolute',
     top: 0,
@@ -231,90 +393,146 @@ const styles = StyleSheet.create({
   },
   noImageText: {
     color: '#666',
-    fontSize: 12,
+    fontSize: 10,
     fontStyle: 'italic',
   },
+  
+  // STATUS BADGES
   liveBadge: {
     position: "absolute",
-    top: 10,
-    left: 10,
+    top: 8,
+    left: 8,
     backgroundColor: "red",
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     borderRadius: 5,
     zIndex: 1,
   },
   liveBadgeText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 10,
   },
   countdownBadge: {
     position: "absolute",
-    top: 10,
-    left: 10,
+    top: 8,
+    left: 8,
     backgroundColor: "#ff6600",
     paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     borderRadius: 5,
     zIndex: 1,
   },
   countdownBadgeText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 10,
   },
+  
+  // INFO CONTAINER - FLEX LAYOUT FOR CONSISTENT ALIGNMENT
   infoContainer: {
     padding: 10,
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: "space-between", // This ensures button stays at bottom
   },
+  
+  webInfoContainer: {
+    padding: 14,
+    flex: 1,
+    justifyContent: "space-between", // This ensures button stays at bottom
+  },
+  
+  // CONTENT CONTAINER - HOLDS ALL CONTENT EXCEPT BUTTON
+  contentContainer: {
+    flex: 1, // Takes available space
+  },
+  
+  webContentContainer: {
+    flex: 1,
+  },
+  
+  // TIMER AREA - REMOVED (no longer needed)
+  
+  // BUTTON AREA - ALWAYS AT BOTTOM
+  buttonArea: {
+    // No flex, just takes its natural height
+    marginTop: 4, // Small spacing from content
+  },
+  
+  // STALL NAME
   stallNameContainer: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f0f8ff",
     borderRadius: 5,
     paddingVertical: 3,
     paddingHorizontal: 8,
     alignSelf: "flex-start",
-    marginBottom: 5,
+    marginBottom: 6,
   },
+  
   stallName: {
     fontWeight: "bold",
+    fontSize: 13,
+    color: "#2563eb",
+  },
+  
+  webStallName: {
     fontSize: 14,
   },
+  
+  // DETAILS TEXT
   details: {
-    fontSize: 12,
-    color: "#666",
-  },
-  timeLeftText: {
     fontSize: 11,
-    color: "#ff6600",
-    fontWeight: "bold",
+    color: "#666",
+    marginBottom: 3,
   },
+  
+  webDetails: {
+    fontSize: 12,
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  
+  // TIME LEFT TEXT - REMOVED (no longer shown in cards)
+  
+  // BUTTONS
   raffleButton: {
     backgroundColor: "#2563eb",
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 5,
     alignItems: "center",
-    marginTop: 5,
   },
+  
   raffleText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 11,
   },
+  
   countdownButton: {
-    backgroundColor: "red",
-    paddingVertical: 6,
+    backgroundColor: "#dc2626",
+    paddingVertical: 7,
     borderRadius: 5,
     alignItems: "center",
-    marginTop: 5,
   },
+  
   countdownText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 12,
+    fontSize: 11,
   },
-  // Modal styles
+  
+  // Web button styles
+  webButton: {
+    paddingVertical: 10,
+    minHeight: 36,
+  },
+  
+  webButtonText: {
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
+  
+  // Modal styles remain the same
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -358,6 +576,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#ff6600',
+  },
+  countdownTimeContainer: {
+    minHeight: 30, // Fixed height to prevent jumping
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   raffleInfo: {
     alignItems: 'center',

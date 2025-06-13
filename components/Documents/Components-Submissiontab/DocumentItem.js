@@ -94,4 +94,4 @@ const DocumentItem = ({
   );
 };
 
-export default DocumentItem;
+export { DocumentItem };

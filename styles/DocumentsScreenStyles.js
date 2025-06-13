@@ -1,10 +1,127 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform, Dimensions } from "react-native";
+
+const { width: screenWidth } = Dimensions.get("window");
+const isWeb = Platform.OS === "web";
+const isLargeScreen = screenWidth >= 768;
 
 const styles = StyleSheet.create({
+  // Mobile Container
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
+
+  // Web Container
+  webContainer: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#f5f5f5",
+    minHeight: "100vh",
+  },
+
+  // Web Content Area
+  webContent: {
+    flex: 1,
+    marginLeft: 80, // Fixed space for the sidebar
+    padding: 30,
+    width: "100%",
+    maxWidth: "100%",
+    backgroundColor: "#f5f5f5",
+  },
+
+  // Web Header
+  webHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    marginBottom: 20,
+    borderRadius: 8,
+  },
+
+  webPageTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#2563eb",
+  },
+
+  webStallBadge: {
+    backgroundColor: "#1cbb1c",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+
+  webBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  // Web Tab Container
+  webTabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  webTab: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    borderRadius: 8,
+    backgroundColor: "transparent",
+    transition: "all 0.3s ease",
+  },
+
+  webActiveTab: {
+    backgroundColor: "#4285f4",
+  },
+
+  webTabText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+
+  webActiveTabText: {
+    color: "#fff",
+  },
+
+  // Web Tab Content
+  webTabContent: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  // Original Mobile Styles
   offlineBanner: {
     backgroundColor: "#ff6b6b",
     padding: 10,
@@ -14,6 +131,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     textAlign: "center",
+  },
+  networkDetails: {
+    color: "#fff",
+    fontSize: 12,
+    marginTop: 4,
   },
   tabContainer: {
     flexDirection: "row",
@@ -74,6 +196,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    marginBottom: 10,
   },
   documentInfo: {
     flex: 1,
@@ -149,233 +272,261 @@ const styles = StyleSheet.create({
   },
   submissionItem: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  submissionLabel: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-    marginBottom: 4,
-  },
-  submissionDate: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 2,
-  },
-  submissionStatus: {
-    fontSize: 12,
-    color: "#4caf50",
-    textTransform: "capitalize",
-  },
-  noSubmissions: {
-    textAlign: "center",
-    color: "#666",
-    fontStyle: "italic",
-    marginTop: 20,
-  },
-  // Enhanced submission item styles
-  submissionItem: {
-    backgroundColor: '#fff',
     padding: 16,
     marginBottom: 12,
     borderRadius: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  
+
   submissionHeader: {
     marginBottom: 12,
   },
-  
+
   submissionLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 4,
   },
-  
+
   submissionDate: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 2,
   },
-  
+
   submissionStatus: {
     fontSize: 14,
-    color: '#28a745',
-    fontWeight: '500',
+    color: "#28a745",
+    fontWeight: "500",
   },
 
   // Image container and thumbnail styles
   imageContainer: {
-    position: 'relative',
+    position: "relative",
     borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#f5f5f5',
+    overflow: "hidden",
+    backgroundColor: "#f5f5f5",
   },
-  
+
   documentThumbnail: {
-    width: '100%',
+    width: "100%",
     height: 200,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
-  
+
   imageLoadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   loadingText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
-  
+
   viewImageOverlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     padding: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  
+
   viewImageText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 
   // No submissions styles
   noSubmissionsContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 40,
   },
-  
+
   noSubmissions: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 8,
   },
-  
+
   noSubmissionsSubtext: {
     fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
+    color: "#999",
+    textAlign: "center",
   },
 
   // Modal styles
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   modalCloseArea: {
     flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
-  
+
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 0,
-    maxWidth: '95%',
-    maxHeight: '90%',
-    overflow: 'hidden',
+    maxWidth: "95%",
+    maxHeight: "90%",
+    overflow: "hidden",
   },
-  
+
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#f8f9fa',
+    borderBottomColor: "#eee",
+    backgroundColor: "#f8f9fa",
   },
-  
+
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     flex: 1,
   },
-  
+
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#dc3545',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#dc3545",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  
+
   closeButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
+
   fullSizeImage: {
-    alignSelf: 'center',
+    alignSelf: "center",
     margin: 16,
   },
-  
+
   modalFooter: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    backgroundColor: '#f8f9fa',
+    borderTopColor: "#eee",
+    backgroundColor: "#f8f9fa",
   },
-  
+
   modalDate: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
   },
-  // ADD THESE MISSING TROUBLESHOOTING STYLES
-troubleshootingBox: {
-  backgroundColor: '#fff3cd',
-  borderWidth: 1,
-  borderColor: '#ffeaa7',
-  borderRadius: 8,
-  padding: 15,
-  margin: 15,
-},
 
-troubleshootingTitle: {
-  fontSize: 16,
-  fontWeight: 'bold',
-  color: '#856404',
-  marginBottom: 8,
-},
+  // Troubleshooting styles
+  troubleshootingBox: {
+    backgroundColor: "#fff3cd",
+    borderWidth: 1,
+    borderColor: "#ffeaa7",
+    borderRadius: 8,
+    padding: 15,
+    margin: 15,
+  },
 
-troubleshootingText: {
-  fontSize: 14,
-  color: '#856404',
-  lineHeight: 20,
-},
+  troubleshootingTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#856404",
+    marginBottom: 8,
+  },
+
+  troubleshootingText: {
+    fontSize: 14,
+    color: "#856404",
+    lineHeight: 20,
+  },
+
+  // Responsive adjustments for web
+  ...(isWeb &&
+    isLargeScreen && {
+      // Override mobile styles for web
+      container: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+        minHeight: "100vh",
+      },
+
+      documentItem: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 20,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        border: "1px solid #e0e0e0",
+      },
+
+      submitAllButton: {
+        backgroundColor: "#4caf50",
+        paddingVertical: 18,
+        paddingHorizontal: 30,
+        borderRadius: 12,
+        alignItems: "center",
+        marginTop: 30,
+        cursor: "pointer",
+        transition: "all 0.3s ease",
+      },
+
+      submissionItem: {
+        backgroundColor: "#fff",
+        padding: 24,
+        marginBottom: 16,
+        borderRadius: 12,
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+        border: "1px solid #e0e0e0",
+      },
+
+      folderInfo: {
+        backgroundColor: "#e3f2fd",
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 20,
+      },
+
+      troubleshootingBox: {
+        backgroundColor: "#fff3cd",
+        borderWidth: 1,
+        borderColor: "#ffeaa7",
+        borderRadius: 12,
+        padding: 20,
+        margin: 0,
+        marginBottom: 20,
+      },
+    }),
 });
 
 export default styles;
