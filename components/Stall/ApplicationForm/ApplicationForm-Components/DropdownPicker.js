@@ -50,10 +50,9 @@ const DropdownPicker = ({
           styles.dropdownMenu, 
           { 
             zIndex: zIndex + 100,
-            // Dynamic height to fit all options without scrolling
             height: options.length * 44,
-            maxHeight: 'auto', // Remove height restriction
-            // Ensure proper positioning for mobile
+            maxHeight: 'auto', 
+
             ...(Platform.OS === 'ios' && { 
               shadowOpacity: 0.25,
               shadowRadius: 3.84,

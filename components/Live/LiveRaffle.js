@@ -13,7 +13,7 @@ import {
   Image,
   Platform,
 } from "react-native";
-// Only import Camera for native platforms
+
 let Camera;
 if (Platform.OS !== "web") {
   Camera = require("expo-camera").Camera;
@@ -32,8 +32,8 @@ export default function LiveRaffle({
   participants = [],
   timerRunning = false,
   timerPaused = false,
-  // New props for user role management
-  userRole = "viewer", // "admin" or "viewer"
+
+  userRole = "viewer",
   userFullName = "Anonymous",
   userEmail = "",
   stallId = null,
@@ -51,7 +51,6 @@ export default function LiveRaffle({
   const videoRef = useRef(null);
   const scrollViewRef = useRef(null);
 
-  // Request camera permissions only for admin users
   useEffect(() => {
     if (userRole === "admin") {
       if (Platform.OS === "web") {
@@ -65,12 +64,10 @@ export default function LiveRaffle({
         })();
       }
     } else {
-      // Viewers don't need camera permissions
       setHasPermission(false);
     }
   }, [userRole]);
 
-  // Initialize with sample messages and participant data
   useEffect(() => {
     if (visible) {
       const sampleMessages = [
@@ -82,18 +79,18 @@ export default function LiveRaffle({
         },
       ];
       setChatMessages(sampleMessages);
-      setViewerCount(participants.length || Math.floor(Math.random() * 50) + 10);
+      setViewerCount(
+        participants.length || Math.floor(Math.random() * 50) + 10
+      );
     }
   }, [visible, stallNo, stallLocation, participants.length]);
 
-  // Auto-scroll chat to bottom
   useEffect(() => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }, [chatMessages]);
 
-  // Cleanup camera stream on unmount
   useEffect(() => {
     return () => {
       if (stream && Platform.OS === "web") {
@@ -155,14 +152,15 @@ export default function LiveRaffle({
   };
 
   const handleToggleLive = async () => {
-    // Only admin can toggle live stream
     if (userRole !== "admin") {
-      Alert.alert("Access Denied", "Only administrators can control the live stream.");
+      Alert.alert(
+        "Access Denied",
+        "Only administrators can control the live stream."
+      );
       return;
     }
 
     if (!isLive) {
-      // Starting live stream
       if (Platform.OS === "web") {
         const success = await startWebCamera();
         if (!success) return;
@@ -201,7 +199,6 @@ export default function LiveRaffle({
   };
 
   const flipCamera = () => {
-    // Only admin can flip camera
     if (userRole !== "admin") return;
 
     if (Platform.OS === "web") {
@@ -330,7 +327,6 @@ export default function LiveRaffle({
           </View>
         );
       } else {
-        // Viewer mode - show live stream placeholder or actual stream
         return (
           <View style={liveStyles.viewerStreamContainer}>
             <View style={liveStyles.liveIndicatorOverlay}>
@@ -339,7 +335,7 @@ export default function LiveRaffle({
               </View>
               <Text style={liveStyles.liveTextOverlay}>🔴 LIVE</Text>
             </View>
-            
+
             <View style={liveStyles.viewerStreamContent}>
               <Text style={liveStyles.viewerStreamText}>
                 📺 Watching Live Stream
@@ -348,7 +344,7 @@ export default function LiveRaffle({
                 Stall {stallNo} • {stallLocation}
               </Text>
             </View>
-            
+
             {/* Show stall image as background for viewers */}
             {getStallImageUrl() && (
               <Image
@@ -372,14 +368,13 @@ export default function LiveRaffle({
               />
             </View>
           )}
-          
+
           <View style={liveStyles.offlineTextContainer}>
             <Text style={liveStyles.offlineText}>Stream Offline</Text>
             <Text style={liveStyles.offlineSubtext}>
-              {userRole === "admin" 
+              {userRole === "admin"
                 ? 'Click "Start Live" to begin broadcasting'
-                : 'Waiting for stream to start...'
-              }
+                : "Waiting for stream to start..."}
             </Text>
             <Text style={liveStyles.stallInfoText}>
               Stall {stallNo} • {stallLocation}
@@ -426,7 +421,8 @@ export default function LiveRaffle({
               </View>
               <View style={liveStyles.userRoleContainer}>
                 <Text style={liveStyles.userRoleText}>
-                  {userRole === "admin" ? "🔧 Administrator" : "👀 Viewer"} • {userFullName}
+                  {userRole === "admin" ? "🔧 Administrator" : "👀 Viewer"} •{" "}
+                  {userFullName}
                 </Text>
               </View>
             </View>
@@ -481,20 +477,30 @@ export default function LiveRaffle({
             >
               {chatMessages.map((msg) => (
                 <View key={msg.id} style={liveStyles.messageContainer}>
-                  <View style={[
-                    liveStyles.messageAvatar,
-                    { backgroundColor: msg.user === userFullName ? "#10B981" : "#3B82F6" }
-                  ]}>
+                  <View
+                    style={[
+                      liveStyles.messageAvatar,
+                      {
+                        backgroundColor:
+                          msg.user === userFullName ? "#10B981" : "#3B82F6",
+                      },
+                    ]}
+                  >
                     <Text style={liveStyles.avatarText}>
                       {msg.user.charAt(0).toUpperCase()}
                     </Text>
                   </View>
                   <View style={liveStyles.messageContent}>
                     <View style={liveStyles.messageHeader}>
-                      <Text style={[
-                        liveStyles.messageUser,
-                        { color: msg.user === userFullName ? "#10B981" : "#1F2937" }
-                      ]}>
+                      <Text
+                        style={[
+                          liveStyles.messageUser,
+                          {
+                            color:
+                              msg.user === userFullName ? "#10B981" : "#1F2937",
+                          },
+                        ]}
+                      >
                         {msg.user}
                       </Text>
                       <Text style={liveStyles.messageTime}>
@@ -513,7 +519,9 @@ export default function LiveRaffle({
                 style={liveStyles.textInput}
                 value={newMessage}
                 onChangeText={setNewMessage}
-                placeholder={`Comment as ${userFullName || (userRole === "admin" ? "Admin" : "Viewer")}`}
+                placeholder={`Comment as ${
+                  userFullName || (userRole === "admin" ? "Admin" : "Viewer")
+                }`}
                 placeholderTextColor="#9CA3AF"
                 multiline={false}
                 returnKeyType="send"
@@ -636,7 +644,7 @@ const liveStyles = StyleSheet.create({
     alignSelf: "center",
     overflow: "hidden",
   },
-  // Camera styles
+
   cameraContainer: {
     flex: 1,
     borderRadius: 12,
@@ -722,7 +730,7 @@ const liveStyles = StyleSheet.create({
     color: "#D1D5DB",
     fontSize: 12,
   },
-  // Viewer stream styles
+
   viewerStreamContainer: {
     flex: 1,
     position: "relative",
@@ -752,7 +760,7 @@ const liveStyles = StyleSheet.create({
     bottom: 0,
     opacity: 0.3,
   },
-  // Permission denied styles
+
   permissionDenied: {
     flex: 1,
     justifyContent: "center",
@@ -770,7 +778,7 @@ const liveStyles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
-  // Offline styles - FIXED LAYOUT
+
   offlineIndicator: {
     flex: 1,
     justifyContent: "center",

@@ -21,30 +21,27 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [screenData, setScreenData] = useState(Dimensions.get('window'));
+  const [screenData, setScreenData] = useState(Dimensions.get("window"));
 
-  // Update screen dimensions on change
   useEffect(() => {
     const onChange = (result) => {
       setScreenData(result.window);
     };
-    const subscription = Dimensions.addEventListener('change', onChange);
+    const subscription = Dimensions.addEventListener("change", onChange);
     return () => subscription?.remove();
   }, []);
 
-  // Determine if we should use web layout
-  const isWeb = Platform.OS === 'web';
+  const isWeb = Platform.OS === "web";
   const isLargeScreen = screenData.width > 768;
   const useWebLayout = isWeb && isLargeScreen;
 
-  // Load saved credentials on component mount
   useEffect(() => {
     const loadSavedCredentials = async () => {
       try {
         const savedUsername = await AsyncStorage.getItem("savedUsername");
         const savedPassword = await AsyncStorage.getItem("savedPassword");
         const savedRememberMe = await AsyncStorage.getItem("rememberMe");
-        
+
         if (savedUsername && savedPassword && savedRememberMe === "true") {
           setUsername(savedUsername);
           setPassword(savedPassword);
@@ -59,21 +56,20 @@ const LoginScreen = ({ navigation }) => {
   }, []);
 
   const handleLogin = async () => {
-    // Validate input fields
     if (!username.trim() || !password.trim()) {
       Alert.alert("Login Failed", "Please enter both username and password.");
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase
         .from("Registrant")
         .select("*")
         .contains("userName", [username])
         .contains("password", [password])
-        .eq("status", "approved"); // Only allow approved users
+        .eq("status", "approved");
 
       if (error) {
         console.error("❌ Supabase error:", error);
@@ -86,21 +82,18 @@ const LoginScreen = ({ navigation }) => {
         return;
       }
 
-      // Save credentials if "Remember Me" is checked
       if (rememberMe) {
         await AsyncStorage.setItem("savedUsername", username);
         await AsyncStorage.setItem("savedPassword", password);
         await AsyncStorage.setItem("rememberMe", "true");
       } else {
-        // Clear saved credentials if "Remember Me" is unchecked
         await AsyncStorage.removeItem("savedUsername");
         await AsyncStorage.removeItem("savedPassword");
         await AsyncStorage.removeItem("rememberMe");
       }
 
-      // ✅ Login success
-      await AsyncStorage.setItem("userEmail", data[0].emailAddress); // Save email
-      await AsyncStorage.setItem("userFullName", data[0].fullName); // Save full name
+      await AsyncStorage.setItem("userEmail", data[0].emailAddress);
+      await AsyncStorage.setItem("userFullName", data[0].fullName);
       navigation.navigate("StallScreen");
     } catch (err) {
       console.error("❌ Login error:", err);
@@ -185,7 +178,7 @@ const LoginScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.webHeader}>
         <Image
-          source={require('../assets/logo.png')}
+          source={require("../assets/logo.png")}
           style={styles.webLogo}
           resizeMode="contain"
         />
@@ -223,8 +216,8 @@ const LoginScreen = ({ navigation }) => {
             <Text style={styles.webCheckboxLabel}>Remember Me</Text>
           </View>
 
-          <TouchableOpacity 
-            style={styles.webLoginButton} 
+          <TouchableOpacity
+            style={styles.webLoginButton}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -233,7 +226,7 @@ const LoginScreen = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.webLinkContainer}
             onPress={handleRegister}
           >
@@ -261,7 +254,9 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={useWebLayout ? styles.webSafeArea : styles.container}>
+      <SafeAreaView
+        style={useWebLayout ? styles.webSafeArea : styles.container}
+      >
         {useWebLayout ? renderWebLayout() : renderMobileLayout()}
       </SafeAreaView>
     </SafeAreaProvider>
@@ -269,7 +264,6 @@ const LoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // Mobile styles (original)
   container: { flex: 1, backgroundColor: "#fff" },
   scrollContainer: { alignItems: "center", paddingVertical: 20 },
   logo: { width: 150, height: 150, resizeMode: "contain", marginTop: 20 },
@@ -328,17 +322,16 @@ const styles = StyleSheet.create({
   footer: { alignItems: "center", marginTop: 30, padding: 10 },
   footerText: { fontSize: 12, color: "#6B7280" },
 
-  // Web styles (AdminLoginScreen layout)
   webSafeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   webContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   webHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 20,
   },
   webLogo: {
@@ -347,79 +340,79 @@ const styles = StyleSheet.create({
   },
   webTitle: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: '#0A2463',
+    fontWeight: "bold",
+    color: "#0A2463",
     marginTop: 10,
   },
   webGreenBar: {
     height: 15,
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   webFormContainer: {
     flex: 1,
-    backgroundColor: '#3B6FE2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#3B6FE2",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
   },
   webFormWrapper: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
     paddingHorizontal: 20,
   },
   webLabel: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     marginBottom: 8,
   },
   webInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 5,
     height: 40,
     marginBottom: 20,
     paddingHorizontal: 10,
-    width: '100%',
+    width: "100%",
   },
   webCheckboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
   webCheckboxLabel: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginLeft: 8,
     fontSize: 14,
   },
   webLoginButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     height: 40,
     borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 10,
-    width: '100%',
+    width: "100%",
   },
   webLoginButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   webLinkContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 15,
   },
   webLink: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
-    textDecorationLine: 'underline',
+    textDecorationLine: "underline",
   },
   webFooter: {
     padding: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   webFooterText: {
     fontSize: 12,
-    color: '#333',
+    color: "#333",
     marginBottom: 2,
   },
 });

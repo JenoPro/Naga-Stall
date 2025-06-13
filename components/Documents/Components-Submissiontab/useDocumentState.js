@@ -16,7 +16,6 @@ export const useDocumentState = (userFullname) => {
   });
   const [uploadedDocuments, setUploadedDocuments] = useState({});
 
-  // Helper function to format date to MM/DD/YY
   const formatDateToMMDDYY = (dateString) => {
     try {
       const date = new Date(dateString);

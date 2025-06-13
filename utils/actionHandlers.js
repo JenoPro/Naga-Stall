@@ -1,12 +1,12 @@
 import { Alert, Platform } from "react-native";
 
-// Cross-platform alert function
 const showAlert = (title, message, buttons = []) => {
-  if (Platform.OS === 'web') {
-    // For web, use browser confirm/alert
+  if (Platform.OS === "web") {
     if (buttons.length > 1) {
       const confirmed = window.confirm(`${title}\n\n${message}`);
-      const confirmButton = buttons.find(btn => btn.text === 'Yes' || btn.onPress);
+      const confirmButton = buttons.find(
+        (btn) => btn.text === "Yes" || btn.onPress
+      );
       if (confirmed && confirmButton && confirmButton.onPress) {
         confirmButton.onPress();
       }
@@ -14,7 +14,6 @@ const showAlert = (title, message, buttons = []) => {
       window.alert(`${title}\n\n${message}`);
     }
   } else {
-    // For mobile, use React Native Alert
     if (buttons.length > 0) {
       Alert.alert(title, message, buttons);
     } else {
@@ -23,9 +22,8 @@ const showAlert = (title, message, buttons = []) => {
   }
 };
 
-// Handle notification toggle
 export const handleNotificationToggle = (
-  currentStatus, 
+  currentStatus,
   setNotificationStatus,
   setPopupMessage,
   setShowPopup
@@ -40,27 +38,21 @@ export const handleNotificationToggle = (
   setShowPopup(true);
 };
 
-// Handle apply now action
 export const handleApplyNow = (stall, navigation) => {
   navigation.navigate("ApplicationForm", { stall });
 };
 
-// Handle logout action
 export const handleLogout = (navigation) => {
-  showAlert(
-    "Logout Confirmation",
-    "Are you sure you want to logout?",
-    [
-      { text: "Cancel" },
-      { text: "No" },
-      {
-        text: "Yes",
-        onPress: () =>
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "LoginScreen" }],
-          }),
-      },
-    ]
-  );
+  showAlert("Logout Confirmation", "Are you sure you want to logout?", [
+    { text: "Cancel" },
+    { text: "No" },
+    {
+      text: "Yes",
+      onPress: () =>
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "LoginScreen" }],
+        }),
+    },
+  ]);
 };

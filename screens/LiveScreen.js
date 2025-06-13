@@ -15,7 +15,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { supabase } from "../config/supabaseClient";
 
-// Import components
 import BottomNavigation from "../components/BottomNavigation";
 import StallCard from "../components/Live/StallCard";
 import UserHeader from "../components/UserHeader";
@@ -40,7 +39,6 @@ export default function LiveScreen() {
   const [liveStalls, setLiveStalls] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Effect to automatically close popup after 3 seconds
   useEffect(() => {
     let timer;
     if (showPopup) {
@@ -51,27 +49,22 @@ export default function LiveScreen() {
     return () => clearTimeout(timer);
   }, [showPopup]);
 
-  // Enhanced function to get image URL from Supabase storage
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
 
     try {
-      // If it's already a full URL, return it
       if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
         return imagePath;
       }
 
-      // Clean the image path - remove any leading slashes
       const cleanPath = imagePath.startsWith("/")
         ? imagePath.substring(1)
         : imagePath;
 
-      // Generate public URL from Supabase storage
       const { data } = supabase.storage
-        .from("stall-images") // Make sure this matches your actual bucket name
+        .from("stall-images")
         .getPublicUrl(cleanPath);
 
-      // Log for debugging
       console.log(
         `🔍 Image path: ${imagePath} -> Clean path: ${cleanPath} -> URL: ${data?.publicUrl}`
       );
@@ -83,12 +76,10 @@ export default function LiveScreen() {
     }
   };
 
-  // Enhanced fetch stalls function with better error handling
   const fetchStalls = async () => {
     try {
       setLoading(true);
 
-      // First, let's check if the Stall table exists and what columns it has
       const { data: tableInfo, error: tableError } = await supabase
         .from("Stall")
         .select("*")
@@ -136,7 +127,6 @@ export default function LiveScreen() {
         return;
       }
 
-      // Transform data to match your component structure
       const transformedStalls = data.map((stall) => {
         const imageUrl = getImageUrl(stall.stallImage);
 
@@ -145,7 +135,7 @@ export default function LiveScreen() {
           name: stall.stallNo || `Stall ${stall.stallId || "Unknown"}`,
           location: stall.stallLocation || "Location not specified",
           size: stall.size || "Size not specified",
-          status: stall.status?.toLowerCase() || "unknown", // 'Countdown' -> 'countdown'
+          status: stall.status?.toLowerCase() || "unknown",
           imageUrl: imageUrl,
           rentalPrice: stall.rentalPrice,
           about: stall.stallAbout,
@@ -165,11 +155,9 @@ export default function LiveScreen() {
     }
   };
 
-  // Enhanced real-time subscription with better error handling
   useEffect(() => {
     fetchStalls();
 
-    // Subscribe to real-time changes
     const subscription = supabase
       .channel("stall_changes")
       .on(
@@ -182,7 +170,7 @@ export default function LiveScreen() {
         },
         (payload) => {
           console.log("🔄 Real-time update received:", payload.eventType);
-          // Add a small delay to avoid rapid successive calls
+
           setTimeout(() => {
             fetchStalls();
           }, 1000);
@@ -242,7 +230,6 @@ export default function LiveScreen() {
     const newStatus = !notificationStatus;
     setNotificationStatus(newStatus);
 
-    // Show popup message
     setPopupMessage(
       newStatus
         ? "Notifications turned ON for live stalls"
@@ -256,21 +243,19 @@ export default function LiveScreen() {
     fetchStalls();
   };
 
-  // Render individual stall card with user data
   const renderStallCard = ({ item }) => (
     <StallCard
       item={item}
-      userRole="viewer" // You can modify this based on user permissions
+      userRole="viewer"
       userFullName={userFullname || "Anonymous"}
       userEmail={userEmail || ""}
-      participants={[]} // You can fetch actual participants if needed
+      participants={[]}
       timerRunning={item.timeRunning || false}
       timerPaused={false}
       getImageUrl={getImageUrl}
     />
   );
 
-  // Check if we should use sidebar (web + large screen)
   const shouldUseSidebar = isWeb && isLargeScreen;
 
   if (loading) {
@@ -364,9 +349,8 @@ export default function LiveScreen() {
             style={styles.flatList}
             refreshing={loading}
             onRefresh={handleRefresh}
-            // Web-specific props for grid layout
             {...(shouldUseSidebar && {
-              numColumns: 1, // We handle columns with flexbox in web
+              numColumns: 1,
               key: "web-layout",
             })}
             ListEmptyComponent={
@@ -409,20 +393,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  // Main content area (unchanged for mobile)
   mainContent: {
     flex: 1,
   },
 
-  // Web content area with space for sidebar
   webContent: {
-    marginLeft: 80, // Fixed space for the navbar
+    marginLeft: 80,
     padding: 30,
     width: "100%",
     maxWidth: "100%",
   },
 
-  // Web header container with white background
   webHeader: {
     flexDirection: "row",
     justifyContent: "space-between",

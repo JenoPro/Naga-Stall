@@ -1,67 +1,65 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  Image, 
-  StyleSheet, 
-  Dimensions, 
+import React, { useState, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
   Platform,
-  Animated 
-} from 'react-native';
+  Animated,
+} from "react-native";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width: screenWidth } = Dimensions.get('window');
-const isWeb = Platform.OS === 'web';
-const isLargeScreen = screenWidth >= 768; // Tablet/Desktop breakpoint
+const { width: screenWidth } = Dimensions.get("window");
+const isWeb = Platform.OS === "web";
+const isLargeScreen = screenWidth >= 768;
 
-const ResponsiveNavigation = ({ 
-  activeTab, 
-  onTabPress, 
-  userFullname: propUserFullname, 
-  userEmail: propUserEmail, 
-  stallNumber = "None" 
+const ResponsiveNavigation = ({
+  activeTab,
+  onTabPress,
+  userFullname: propUserFullname,
+  userEmail: propUserEmail,
+  stallNumber = "None",
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [userFullname, setUserFullname] = useState(propUserFullname || '');
-  const [userEmail, setUserEmail] = useState(propUserEmail || '');
+  const [userFullname, setUserFullname] = useState(propUserFullname || "");
+  const [userEmail, setUserEmail] = useState(propUserEmail || "");
   const [loading, setLoading] = useState(true);
   const animatedWidth = useRef(new Animated.Value(80)).current;
   const shouldUseSidebar = isWeb && isLargeScreen;
 
-  // Fetch user data from AsyncStorage
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Try to get user data from AsyncStorage
-        const storedUserData = await AsyncStorage.getItem('userData');
-        const storedUserFullname = await AsyncStorage.getItem('userFullname') || await AsyncStorage.getItem('userFullName');
-        const storedUserEmail = await AsyncStorage.getItem('userEmail');
-        
+        const storedUserData = await AsyncStorage.getItem("userData");
+        const storedUserFullname =
+          (await AsyncStorage.getItem("userFullname")) ||
+          (await AsyncStorage.getItem("userFullName"));
+        const storedUserEmail = await AsyncStorage.getItem("userEmail");
+
         if (storedUserData) {
-          // If userData is stored as JSON object
           const userData = JSON.parse(storedUserData);
-          setUserFullname(userData.fullname || userData.name || propUserFullname || 'User');
-          setUserEmail(userData.email || propUserEmail || '');
+          setUserFullname(
+            userData.fullname || userData.name || propUserFullname || "User"
+          );
+          setUserEmail(userData.email || propUserEmail || "");
         } else if (storedUserFullname || storedUserEmail) {
-          // If stored as separate items
-          setUserFullname(storedUserFullname || propUserFullname || 'User');
-          setUserEmail(storedUserEmail || propUserEmail || '');
+          setUserFullname(storedUserFullname || propUserFullname || "User");
+          setUserEmail(storedUserEmail || propUserEmail || "");
         } else if (propUserFullname || propUserEmail) {
-          // Use props if provided
-          setUserFullname(propUserFullname || 'User');
-          setUserEmail(propUserEmail || '');
+          setUserFullname(propUserFullname || "User");
+          setUserEmail(propUserEmail || "");
         } else {
-          // Default fallback
-          setUserFullname('User');
-          setUserEmail('');
+          setUserFullname("User");
+          setUserEmail("");
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        // Fallback to props or default values
-        setUserFullname(propUserFullname || 'User');
-        setUserEmail(propUserEmail || '');
+        console.error("Error fetching user data:", error);
+
+        setUserFullname(propUserFullname || "User");
+        setUserEmail(propUserEmail || "");
       } finally {
         setLoading(false);
       }
@@ -119,7 +117,6 @@ const ResponsiveNavigation = ({
     onTabPress(tabName);
   };
 
-  // Show loading state while fetching user data
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -128,15 +125,14 @@ const ResponsiveNavigation = ({
     );
   }
 
-  // Mobile Bottom Navigation
   if (!shouldUseSidebar) {
     return (
       <>
         {/* Mobile Header */}
         <View style={styles.mobileHeader}>
           <View>
-            <Text style={styles.userName}>👤 {userFullname || 'User'}</Text>
-            <Text style={styles.userEmail}>{userEmail || 'No email'}</Text>
+            <Text style={styles.userName}>👤 {userFullname || "User"}</Text>
+            <Text style={styles.userEmail}>{userEmail || "No email"}</Text>
           </View>
           <TouchableOpacity style={styles.stallBadge}>
             <Text style={styles.badgeText}>STALL#: {stallNumber}</Text>
@@ -179,7 +175,6 @@ const ResponsiveNavigation = ({
     );
   }
 
-  // Web Sidebar Navigation
   return (
     <>
       {/* Sidebar Navigation */}
@@ -196,10 +191,10 @@ const ResponsiveNavigation = ({
           {isExpanded && (
             <View style={styles.profileInfo}>
               <Text style={styles.sidebarUserName} numberOfLines={1}>
-                {userFullname || 'User'}
+                {userFullname || "User"}
               </Text>
               <Text style={styles.sidebarUserEmail} numberOfLines={1}>
-                {userEmail || 'No email'}
+                {userEmail || "No email"}
               </Text>
             </View>
           )}
@@ -208,7 +203,7 @@ const ResponsiveNavigation = ({
         {/* Navigation Items */}
         <View style={styles.sidebarNavSection}>
           <View style={styles.navItemsContainer}>
-            {tabs.slice(0, -1).map((tab) => { // Exclude logout from main nav
+            {tabs.slice(0, -1).map((tab) => {
               const isActive = activeTab === tab.name;
               return (
                 <TouchableOpacity
@@ -245,16 +240,14 @@ const ResponsiveNavigation = ({
           {/* Logout Button */}
           <TouchableOpacity
             style={styles.sidebarNavItem}
-            onPress={() => handleTabPress('logout')}
+            onPress={() => handleTabPress("logout")}
           >
             <Image
               source={tabs[tabs.length - 1].icon}
               style={styles.sidebarNavIcon}
               resizeMode="contain"
             />
-            {isExpanded && (
-              <Text style={styles.sidebarNavLabel}>Logout</Text>
-            )}
+            {isExpanded && <Text style={styles.sidebarNavLabel}>Logout</Text>}
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -263,14 +256,12 @@ const ResponsiveNavigation = ({
 };
 
 const styles = StyleSheet.create({
-  // Loading Container
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  // Mobile Header Styles
   mobileHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -281,7 +272,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  // Web Header Styles
   webHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -298,7 +288,6 @@ const styles = StyleSheet.create({
     transition: "margin-left 0.3s ease",
   },
 
-  // Shared Header Styles
   userName: {
     fontSize: 16,
     fontWeight: "bold",
@@ -319,7 +308,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  // Bottom Navigation Styles (Mobile)
   bottomNav: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -354,9 +342,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
   },
-  activeNavButton: {
-    // Add any active button styles if needed
-  },
+  activeNavButton: {},
   activeNavIcon: {
     tintColor: "#2563eb",
   },
@@ -365,7 +351,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  // Sidebar Styles (Web)
   sidebar: {
     position: "fixed",
     left: 0,

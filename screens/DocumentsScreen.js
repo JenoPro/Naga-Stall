@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import UserHeader from "../components/UserHeader";
 import BottomNavigation from "../components/BottomNavigation";
-import ResponsiveNavigation from "../components/BottomNavigation"; // Your existing component
+import ResponsiveNavigation from "../components/BottomNavigation";
 import UploadDocumentsTab from "../components/Documents/UploadDocumentsTab";
 import MySubmissionsTab from "../components/Documents/MySubmissionsTab";
 import { handleLogout } from "../utils/actionHandlers";
@@ -30,7 +30,6 @@ export default function DocumentsScreen({ navigation }) {
   const [userEmail, setUserEmail] = useState("");
   const [stallNumber, setStallNumber] = useState("None");
 
-  // Check internet connection with detailed info
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       console.log("Network state:", state);
@@ -40,7 +39,6 @@ export default function DocumentsScreen({ navigation }) {
     return () => unsubscribe();
   }, []);
 
-  // Get user data on mount
   useEffect(() => {
     getUserData();
   }, []);
@@ -76,7 +74,6 @@ export default function DocumentsScreen({ navigation }) {
     }
   };
 
-  // Render mobile version
   const renderMobileLayout = () => (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -148,7 +145,6 @@ export default function DocumentsScreen({ navigation }) {
     </SafeAreaProvider>
   );
 
-  // Render web version with sidebar
   const renderWebLayout = () => (
     <View style={styles.webContainer}>
       <ResponsiveNavigation
@@ -228,7 +224,6 @@ export default function DocumentsScreen({ navigation }) {
     </View>
   );
 
-  // Return appropriate layout based on platform and screen size
   if (isWeb && isLargeScreen) {
     return renderWebLayout();
   } else {

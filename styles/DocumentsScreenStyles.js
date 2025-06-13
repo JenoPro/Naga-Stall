@@ -5,13 +5,11 @@ const isWeb = Platform.OS === "web";
 const isLargeScreen = screenWidth >= 768;
 
 const styles = StyleSheet.create({
-  // Mobile Container
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
 
-  // Web Container
   webContainer: {
     flex: 1,
     flexDirection: "row",
@@ -19,28 +17,26 @@ const styles = StyleSheet.create({
     minHeight: "100vh",
   },
 
-  // Web Content Area
   webContent: {
     flex: 1,
-    marginLeft: 80, // Fixed space for the sidebar
+    marginLeft: 80,
     padding: 30,
     width: "100%",
     maxWidth: "100%",
     backgroundColor: "#f5f5f5",
   },
 
-  // Web Header
   webHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: '#fff',
+    borderBottomColor: "#e0e0e0",
+    backgroundColor: "#fff",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -70,7 +66,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Web Tab Container
   webTabContainer: {
     flexDirection: "row",
     backgroundColor: "#fff",
@@ -108,7 +103,6 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 
-  // Web Tab Content
   webTabContent: {
     flex: 1,
     backgroundColor: "#fff",
@@ -121,7 +115,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  // Original Mobile Styles
   offlineBanner: {
     backgroundColor: "#ff6b6b",
     padding: 10,
@@ -305,7 +298,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Image container and thumbnail styles
   imageContainer: {
     position: "relative",
     borderRadius: 8,
@@ -351,7 +343,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // No submissions styles
   noSubmissionsContainer: {
     alignItems: "center",
     padding: 40,
@@ -370,7 +361,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // Modal styles
   modalContainer: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.9)",
@@ -445,7 +435,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // Troubleshooting styles
   troubleshootingBox: {
     backgroundColor: "#fff3cd",
     borderWidth: 1,
@@ -468,10 +457,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Responsive adjustments for web
   ...(isWeb &&
     isLargeScreen && {
-      // Override mobile styles for web
       container: {
         flex: 1,
         backgroundColor: "#f5f5f5",

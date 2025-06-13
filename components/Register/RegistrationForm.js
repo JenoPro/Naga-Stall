@@ -1,35 +1,41 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import ImageUpload from "./ImageUpload";
 import TermsCheckbox from "./TermsCheckbox";
 import DropdownPicker from "../Stall/ApplicationForm/ApplicationForm-Components/DropdownPicker";
-import { barangayOptions, getStreetOptions } from "../Stall/ApplicationForm/ApplicationForm-Components/FormConstants";
+import {
+  barangayOptions,
+  getStreetOptions,
+} from "../Stall/ApplicationForm/ApplicationForm-Components/FormConstants";
 
-export default function RegistrationForm({ 
-  formData, 
-  updateFormData, 
-  onRegister, 
-  isLoading, 
-  isConnected 
+export default function RegistrationForm({
+  formData,
+  updateFormData,
+  onRegister,
+  isLoading,
+  isConnected,
 }) {
-  const { 
-    fullName, 
-    emailAddress, 
-    phoneNumber, 
-    barangay, 
-    street, 
-    mailingAddress, 
-    image, 
-    termsAccepted 
+  const {
+    fullName,
+    emailAddress,
+    phoneNumber,
+    barangay,
+    street,
+    mailingAddress,
+    image,
+    termsAccepted,
   } = formData;
-  
-  // State for managing dropdown visibility
+
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  // Get street options based on selected barangay
   const streetOptions = getStreetOptions(barangay || "");
 
-  // Handle dropdown open/close
   const handleDropdownOpen = (dropdownId) => {
     setActiveDropdown(dropdownId);
   };
@@ -38,23 +44,20 @@ export default function RegistrationForm({
     setActiveDropdown(null);
   };
 
-  // Handle barangay selection
   const handleBarangayChange = (value) => {
-    updateFormData('barangay', value);
-    // Clear street selection when barangay changes
-    updateFormData('street', "");
-    // Update mailing address
+    updateFormData("barangay", value);
+
+    updateFormData("street", "");
+
     updateMailingAddress(value, "");
   };
 
-  // Handle street selection
   const handleStreetChange = (value) => {
-    updateFormData('street', value);
-    // Update mailing address
+    updateFormData("street", value);
+
     updateMailingAddress(barangay, value);
   };
 
-  // Update mailing address helper function
   const updateMailingAddress = (selectedBarangay, selectedStreet) => {
     if (selectedBarangay && selectedStreet) {
       const fullAddress = `${selectedStreet}, Barangay ${selectedBarangay}, Naga City, Camarines Sur`;
@@ -66,9 +69,15 @@ export default function RegistrationForm({
       updateFormData("mailingAddress", "");
     }
   };
-  
-  // Update form validation to use new address fields
-  const isFormValid = fullName && emailAddress && phoneNumber && barangay && street && image && termsAccepted;
+
+  const isFormValid =
+    fullName &&
+    emailAddress &&
+    phoneNumber &&
+    barangay &&
+    street &&
+    image &&
+    termsAccepted;
   const isButtonDisabled = isLoading || !isConnected || !isFormValid;
 
   return (
@@ -78,7 +87,7 @@ export default function RegistrationForm({
         style={styles.input}
         placeholder="Enter your full name"
         value={fullName}
-        onChangeText={(value) => updateFormData('fullName', value)}
+        onChangeText={(value) => updateFormData("fullName", value)}
         onFocus={closeAllDropdowns}
       />
 
@@ -87,7 +96,7 @@ export default function RegistrationForm({
         style={styles.input}
         placeholder="Enter your email address"
         value={emailAddress}
-        onChangeText={(value) => updateFormData('emailAddress', value)}
+        onChangeText={(value) => updateFormData("emailAddress", value)}
         keyboardType="email-address"
         autoCapitalize="none"
         onFocus={closeAllDropdowns}
@@ -98,7 +107,7 @@ export default function RegistrationForm({
         style={styles.input}
         placeholder="Enter your phone number"
         value={phoneNumber}
-        onChangeText={(value) => updateFormData('phoneNumber', value)}
+        onChangeText={(value) => updateFormData("phoneNumber", value)}
         keyboardType="phone-pad"
         onFocus={closeAllDropdowns}
       />
@@ -122,7 +131,6 @@ export default function RegistrationForm({
         searchable={true}
         searchPlaceholder="Search barangay..."
         style={styles.dropdown}
-        // Add scrollable properties for mobile
         maxHeight={200}
         scrollViewProps={{
           nestedScrollEnabled: true,
@@ -148,7 +156,6 @@ export default function RegistrationForm({
             searchable={true}
             searchPlaceholder="Search street..."
             style={styles.dropdown}
-            // Add scrollable properties for mobile
             maxHeight={200}
             scrollViewProps={{
               nestedScrollEnabled: true,
@@ -171,12 +178,12 @@ export default function RegistrationForm({
       <Text style={[styles.fieldLabel, { marginTop: 20 }]}>Valid ID*</Text>
       <ImageUpload
         image={image}
-        onImageSelected={(uri) => updateFormData('image', uri)}
+        onImageSelected={(uri) => updateFormData("image", uri)}
       />
 
       <TermsCheckbox
         isChecked={termsAccepted}
-        onToggle={(checked) => updateFormData('termsAccepted', checked)}
+        onToggle={(checked) => updateFormData("termsAccepted", checked)}
       />
 
       <TouchableOpacity
@@ -223,16 +230,15 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     marginBottom: 10,
-    // Ensure dropdown container has proper styling for mobile
     minHeight: 50,
   },
   addressDisplay: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 15,
     borderRadius: 5,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   addressLabel: {
     fontSize: 12,

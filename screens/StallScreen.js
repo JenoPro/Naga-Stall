@@ -14,19 +14,16 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-// Import shared components
 import BottomNavigation from "../components/BottomNavigation";
 import UserHeader from "../components/UserHeader";
 import FilterBar from "../components/FilterBar";
 import NotificationPopup from "../components/NotificationPopup";
 import ResponsiveNavigation from "../components/BottomNavigation";
 
-// Import stall-specific components
 import StallCard from "../components/Stall/StallCard";
 import SortModal from "../components/Stall/SortModal";
 import ImageViewerModal from "../components/Stall/ImageViewerModal";
 
-// Import utils and api functions
 import {
   getImageUrl,
   fetchStalls,
@@ -37,7 +34,6 @@ import {
   handleLogout,
 } from "../utils/actionHandlers";
 
-// Import styles
 import styles from "../styles/StallScreenStyles";
 
 export default function StallScreen() {
@@ -58,12 +54,10 @@ export default function StallScreen() {
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [screenData, setScreenData] = useState(Dimensions.get("window"));
 
-  // Detect if running on web
   const isWeb = Platform.OS === "web";
   const isTablet = screenData.width >= 768;
   const showWebLayout = isWeb || isTablet;
 
-  // Update screen dimensions
   useEffect(() => {
     const subscription = Dimensions.addEventListener("change", ({ window }) => {
       setScreenData(window);
@@ -72,7 +66,6 @@ export default function StallScreen() {
     return () => subscription?.remove();
   }, []);
 
-  // View Image Handler
   const handleViewImage = (imagePath) => {
     const imageUrl = getImageUrl(imagePath);
     console.log("Opening image:", imageUrl);
@@ -80,7 +73,6 @@ export default function StallScreen() {
     setImageModalVisible(true);
   };
 
-  // Sort stalls based on criteria
   const sortStalls = (criteria, stallsToSort = stalls) => {
     let sorted = [...stallsToSort];
 
@@ -97,9 +89,7 @@ export default function StallScreen() {
     } else if (
       ["Available", "Applied", "Raffle", "Countdown"].includes(criteria)
     ) {
-      // Sort by status - first show stalls matching the selected status
       sorted.sort((a, b) => {
-        // Helper function to get effective status
         const getEffectiveStatus = (item) => {
           if (item.hasUserApplied) return "Applied";
           return item.status
@@ -110,18 +100,15 @@ export default function StallScreen() {
         const aStatus = getEffectiveStatus(a);
         const bStatus = getEffectiveStatus(b);
 
-        // If both match the criteria, sort by stall number
         if (aStatus === criteria && bStatus === criteria) {
           const aNum = parseInt(String(a.stall_number).replace(/\D/g, ""));
           const bNum = parseInt(String(b.stall_number).replace(/\D/g, ""));
           return aNum - bNum;
         }
 
-        // Prioritize stalls that match the selected status
         if (aStatus === criteria) return -1;
         if (bStatus === criteria) return 1;
 
-        // For non-matching stalls, maintain status order: Available -> Applied -> Raffle -> Countdown
         const statusOrder = ["available", "applied", "Raffle", "Countdown"];
         const aIndex = statusOrder.indexOf(aStatus);
         const bIndex = statusOrder.indexOf(bStatus);
@@ -130,7 +117,6 @@ export default function StallScreen() {
           return aIndex - bIndex;
         }
 
-        // If status not in order, sort by stall number
         const aNum = parseInt(String(a.stall_number).replace(/\D/g, ""));
         const bNum = parseInt(String(b.stall_number).replace(/\D/g, ""));
         return aNum - bNum;
@@ -140,13 +126,11 @@ export default function StallScreen() {
     setSortedStalls(sorted);
   };
 
-  // Handle sort option selection
   const handleSortOption = (option) => {
     setSortBy(option);
     setSortModalVisible(false);
   };
 
-  // Load user data from AsyncStorage
   const loadUserData = async () => {
     try {
       const storedFullName = await AsyncStorage.getItem("userFullName");
@@ -161,7 +145,6 @@ export default function StallScreen() {
     }
   };
 
-  // Handle application success - refresh user applications
   const handleApplicationSuccess = async () => {
     console.log("🔄 Application submitted, refreshing data...");
     if (userFullname && stalls.length > 0) {
@@ -174,7 +157,6 @@ export default function StallScreen() {
     }
   };
 
-  // Handle tab navigation
   const handleTabPress = (tabName) => {
     if (tabName === "logout") {
       handleLogout(navigation);
@@ -190,12 +172,10 @@ export default function StallScreen() {
     }
   };
 
-  // Handle filter button click
   const handleFilterClick = () => {
     setSortModalVisible(true);
   };
 
-  // Handle notification toggle (only for mobile)
   const handleNotificationToggle = () => {
     const newStatus = !notificationStatus;
     setNotificationStatus(newStatus);
@@ -208,7 +188,6 @@ export default function StallScreen() {
     setShowPopup(true);
   };
 
-  // Fetch stalls data on component mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -228,7 +207,6 @@ export default function StallScreen() {
     loadData();
   }, []);
 
-  // Check for user applications when stalls and user data are loaded
   useEffect(() => {
     if (stalls.length > 0 && userFullname) {
       console.log("🔄 Checking applications for user:", userFullname);
@@ -241,12 +219,10 @@ export default function StallScreen() {
     }
   }, [stalls.length, userFullname]);
 
-  // Update sorted stalls when sort criteria or stalls change
   useEffect(() => {
     sortStalls(sortBy, stalls);
   }, [sortBy, stalls]);
 
-  // Hide notification popup after delay
   useEffect(() => {
     let timer;
     if (showPopup) {
@@ -257,26 +233,23 @@ export default function StallScreen() {
     return () => clearTimeout(timer);
   }, [showPopup]);
 
-  // Determine number of columns for web grid
   const getNumColumns = () => {
     FlatList;
     if (!showWebLayout) return 1;
-    // Use available content width for calculation
-    const availableWidth = screenData.width - 80 - 40; // navbar + content padding
 
-    if (availableWidth >= 1200) return 3; // 3 columns for larger screens
-    if (availableWidth >= 900) return 2; // 2 columns for medium screens
-    return 1; // Single column for smaller screens
+    const availableWidth = screenData.width - 80 - 40;
+
+    if (availableWidth >= 1200) return 3;
+    if (availableWidth >= 900) return 2;
+    return 1;
   };
 
-  // Web Header Component (simplified - no filter bar)
   const WebHeader = () => (
     <View style={styles.webHeader}>
       <Text style={styles.webTitle}>Market Stalls</Text>
     </View>
   );
 
-  // Web Filter Bar Component (separate from header)
   const WebFilterBar = () => (
     <View style={styles.webFilterContainer}>
       <FilterBar
@@ -337,18 +310,17 @@ export default function StallScreen() {
                   contentContainerStyle={[styles.list, styles.webList]}
                   style={[styles.flatList, styles.webFlatList]}
                   numColumns={getNumColumns()}
-                  key={`${getNumColumns()}-${screenData.width}`} // Force re-render when columns or screen size change
+                  key={`${getNumColumns()}-${screenData.width}`}
                   columnWrapperStyle={getNumColumns() > 1 ? styles.row : null}
-                  scrollEventThrottle={16} // Smooth scrolling
-                  removeClippedSubviews={true} // Performance optimization
-                  maxToRenderPerBatch={10} // Render optimization
-                  windowSize={10} // Memory optimization
+                  scrollEventThrottle={16}
+                  removeClippedSubviews={true}
+                  maxToRenderPerBatch={10}
+                  windowSize={10}
                 />
               )}
             </View>
           </>
         ) : (
-          /* Mobile Layout */
           <>
             <UserHeader
               userFullname={userFullname}

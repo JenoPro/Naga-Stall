@@ -1,6 +1,5 @@
 import supabase from "../config/supabaseClient";
 
-// Get image URL from Supabase storage
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
   try {
@@ -15,7 +14,6 @@ export const getImageUrl = (imagePath) => {
   }
 };
 
-// Fetch stalls from Supabase
 export const fetchStalls = async () => {
   try {
     const { data: stallsData, error } = await supabase
@@ -55,7 +53,7 @@ export const fetchStalls = async () => {
         originalImagePath: stall.stallImage,
         created_at: stall.created_at,
         raffle_date: stall.raffleDate,
-        hasUserApplied: false, // Initialize as false
+        hasUserApplied: false,
       };
     });
 
@@ -67,7 +65,6 @@ export const fetchStalls = async () => {
   }
 };
 
-// Function to check if user has already applied for any stall
 export const checkUserApplications = async (
   stalls,
   setStalls,
@@ -82,7 +79,6 @@ export const checkUserApplications = async (
 
     console.log("🔍 Checking applications for user:", userFullName);
 
-    // Check if the user has any stall applications
     const { data, error } = await supabase
       .from("Application")
       .select("stallNo, status")
@@ -95,7 +91,6 @@ export const checkUserApplications = async (
 
     console.log("✅ User applications data:", data);
 
-    // Log all stallNo values for debugging
     if (data && data.length > 0) {
       console.log("📝 Found applications with stallNo values:");
       data.forEach((app, index) => {
@@ -107,37 +102,43 @@ export const checkUserApplications = async (
       });
     }
 
-    // Update stalls status based on user applications
     setStalls((currentStalls) => {
       console.log("🔍 Comparing with stalls:");
       currentStalls.forEach((stall, index) => {
         console.log(
-          `   Stall ${index + 1}: id = "${stall.id}", stall_number = "${stall.stall_number}"`
+          `   Stall ${index + 1}: id = "${stall.id}", stall_number = "${
+            stall.stall_number
+          }"`
         );
       });
 
       const updatedStalls = currentStalls.map((stall) => {
         const application = data?.find((app) => {
-          // Compare with stall ID (primary key) which should match the stored stallNo
           if (String(app.stallNo) === String(stall.id)) {
             return true;
           }
-          
-          // Fallback: also check against stall_number in case of inconsistency
+
           if (String(app.stallNo) === String(stall.stall_number)) {
             return true;
           }
 
-          // Additional fallback: try numeric comparison
           const appStallNum = parseInt(String(app.stallNo));
           const stallId = parseInt(String(stall.id));
           const stallNum = parseInt(String(stall.stall_number));
-          
-          if (!isNaN(appStallNum) && !isNaN(stallId) && appStallNum === stallId) {
+
+          if (
+            !isNaN(appStallNum) &&
+            !isNaN(stallId) &&
+            appStallNum === stallId
+          ) {
             return true;
           }
-          
-          if (!isNaN(appStallNum) && !isNaN(stallNum) && appStallNum === stallNum) {
+
+          if (
+            !isNaN(appStallNum) &&
+            !isNaN(stallNum) &&
+            appStallNum === stallNum
+          ) {
             return true;
           }
 
@@ -149,14 +150,12 @@ export const checkUserApplications = async (
             `🎯 Found application for stall ${stall.stall_number} (ID: ${stall.id}): ${application.status}`
           );
 
-          // User has applied to this stall
           return {
             ...stall,
             hasUserApplied: true,
           };
         }
 
-        // User has not applied to this stall
         return {
           ...stall,
           hasUserApplied: false,

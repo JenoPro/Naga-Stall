@@ -4,7 +4,6 @@ import supabase from "../../../config/supabaseClient";
 import { documentTypes } from "./documentConfig";
 
 export const useDocumentUpload = (userFullname) => {
-  // Helper functions
   const sanitizeFolderName = (name) => {
     return name.replace(/[\/\\:*?"<>|]/g, "").trim();
   };
@@ -60,24 +59,21 @@ export const useDocumentUpload = (userFullname) => {
     }
   };
 
-  // New function to convert base64 to blob
   const base64ToBlob = (base64Data) => {
     try {
-      // Remove data URL prefix if present
-      const base64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
-      
-      // Convert base64 to binary
+      const base64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, "");
+
       const byteCharacters = atob(base64);
       const byteNumbers = new Array(byteCharacters.length);
-      
+
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      
+
       const byteArray = new Uint8Array(byteNumbers);
-      return new Blob([byteArray], { type: 'image/png' });
+      return new Blob([byteArray], { type: "image/png" });
     } catch (error) {
-      console.error('Error converting base64 to blob:', error);
+      console.error("Error converting base64 to blob:", error);
       throw error;
     }
   };
@@ -113,8 +109,6 @@ export const useDocumentUpload = (userFullname) => {
 
   const deleteOldDocument = async (documentType) => {
     try {
-      // This would need access to uploadedDocuments state
-      // For now, return success - you'll need to pass this data or refactor
       return { success: true };
     } catch (error) {
       console.error("Error in deleteOldDocument:", error);
@@ -163,13 +157,11 @@ export const useDocumentUpload = (userFullname) => {
 
       try {
         let blob;
-        
-        // Handle base64 data (for signatures)
+
         if (documentData.isBase64) {
           console.log("Processing base64 data...");
           blob = documentData.blob || base64ToBlob(documentData.uri);
         } else {
-          // Handle regular file URI
           console.log("Attempting upload with fetch method...");
           const response = await fetch(documentData.uri);
           if (!response.ok) {
@@ -205,9 +197,11 @@ export const useDocumentUpload = (userFullname) => {
           filePath: filePath,
         };
       } catch (blobError) {
-        // Only try FormData method for non-base64 data
         if (!documentData.isBase64) {
-          console.log("Blob method failed, trying FormData method:", blobError.message);
+          console.log(
+            "Blob method failed, trying FormData method:",
+            blobError.message
+          );
 
           const formData = await createFormData(documentData, filename);
 
@@ -233,7 +227,6 @@ export const useDocumentUpload = (userFullname) => {
             filePath: filePath,
           };
         } else {
-          // For base64 data, re-throw the original error
           throw blobError;
         }
       }
@@ -249,10 +242,10 @@ export const useDocumentUpload = (userFullname) => {
   const updateDocumentsTable = async (documentType, fileUrl) => {
     try {
       const docConfig = documentTypes.find((d) => d.key === documentType);
-      if (!docConfig && documentType !== 'applicant_signature') {
+      if (!docConfig && documentType !== "applicant_signature") {
         throw new Error("Invalid document type");
       }
-      
+
       if (!userFullname) {
         throw new Error("User not found");
       }
@@ -264,14 +257,15 @@ export const useDocumentUpload = (userFullname) => {
         .single();
 
       const updateData = {};
-      
-      // Handle signature uploads separately
-      if (documentType === 'applicant_signature') {
-        updateData['applicant_signature'] = fileUrl;
-        updateData['applicant_signature_uploaded_at'] = new Date().toISOString();
+
+      if (documentType === "applicant_signature") {
+        updateData["applicant_signature"] = fileUrl;
+        updateData["applicant_signature_uploaded_at"] =
+          new Date().toISOString();
       } else {
         updateData[docConfig.column] = fileUrl;
-        updateData[`${docConfig.column}_uploaded_at`] = new Date().toISOString();
+        updateData[`${docConfig.column}_uploaded_at`] =
+          new Date().toISOString();
       }
 
       let result;

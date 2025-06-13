@@ -7,7 +7,7 @@ const FinalDetailsStep = ({
   formData,
   updateFormData,
   closeAllDropdowns,
-  userId, // Add this prop for database operations
+  userId, 
 }) => {
   return (
     <View style={styles.stepContainer}>

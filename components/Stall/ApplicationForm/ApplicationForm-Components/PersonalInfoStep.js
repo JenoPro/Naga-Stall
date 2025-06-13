@@ -13,25 +13,22 @@ const PersonalInfoStep = ({
   educationOptions,
   civilStatusOptions,
 }) => {
-  
-  // Get the currently selected barangay and street from formData
   const selectedBarangay = formData.barangay || "";
   const selectedStreet = formData.street || "";
-  
-  // Get street options based on selected barangay
+
   const streetOptions = getStreetOptions(selectedBarangay);
 
   const handleBarangayChange = (value) => {
     updateFormData("barangay", value);
-    // Clear street selection when barangay changes
+
     updateFormData("street", "");
-    // Update mailing address
+
     updateMailingAddress(value, "");
   };
 
   const handleStreetChange = (value) => {
     updateFormData("street", value);
-    // Update mailing address
+
     updateMailingAddress(selectedBarangay, value);
   };
 
@@ -100,7 +97,12 @@ const PersonalInfoStep = ({
       />
 
       {/* Address Section */}
-      <Text style={[styles.stepTitle, { fontSize: 16, marginTop: 20, marginBottom: 10 }]}>
+      <Text
+        style={[
+          styles.stepTitle,
+          { fontSize: 16, marginTop: 20, marginBottom: 10 },
+        ]}
+      >
         Complete Mailing Address (Naga City, Camarines Sur)
       </Text>
 
@@ -136,8 +138,13 @@ const PersonalInfoStep = ({
 
       {/* Display formatted address */}
       {formData.mailingAddress && (
-        <View style={[styles.input, { backgroundColor: '#f5f5f5', paddingVertical: 15 }]}>
-          <Text style={{ color: '#666', fontSize: 14 }}>
+        <View
+          style={[
+            styles.input,
+            { backgroundColor: "#f5f5f5", paddingVertical: 15 },
+          ]}
+        >
+          <Text style={{ color: "#666", fontSize: 14 }}>
             {formData.mailingAddress}
           </Text>
         </View>

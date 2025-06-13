@@ -55,16 +55,16 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    paddingBottom: 40, // Extra padding at bottom for better scrolling
+    paddingBottom: 40,
     flexGrow: 1,
   },
   touchableContainer: {
     flex: 1,
-    minHeight: screenHeight * 0.5, // Ensure minimum height for scrolling
+    minHeight: screenHeight * 0.5,
   },
   stepContainer: {
     paddingBottom: 20,
-    minHeight: screenHeight * 0.4, // Minimum height to enable scrolling
+    minHeight: screenHeight * 0.4,
   },
   stepTitle: {
     fontSize: 18,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 15,
     fontSize: 16,
-    minHeight: 50, // Ensure consistent height
+    minHeight: 50,
   },
   textArea: {
     backgroundColor: "#f8f9fa",
@@ -140,7 +140,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Fixed Dropdown specific styles
   dropdownContainer: {
     marginBottom: 15,
     position: "relative",
@@ -173,8 +172,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 8,
-    // Remove maxHeight restriction to show all options
-    // height will be set dynamically in component
+
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -182,7 +180,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 100, // High elevation for Android
+    elevation: 100,
     overflow: "hidden",
   },
   dropdownScrollView: {
@@ -198,8 +196,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
     backgroundColor: "#fff",
-    height: 44, // Fixed height for consistent sizing
-    justifyContent: "center", // Center text vertically
+    height: 44,
+    justifyContent: "center",
   },
   lastDropdownOption: {
     borderBottomWidth: 0,
@@ -208,8 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  // Add these to your existing styles
-  // Signature styles
+
   signatureButton: {
     backgroundColor: "#f8f9fa",
     borderWidth: 2,
@@ -250,7 +247,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  // Location styles
   locationButton: {
     backgroundColor: "#f8f9fa",
     borderWidth: 2,
@@ -277,7 +273,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  // Modal styles
   signatureModal: {
     flex: 1,
     backgroundColor: "#f8f9fa",

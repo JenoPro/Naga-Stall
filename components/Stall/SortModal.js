@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Modal, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { supabase } from "../../config/supabaseClient";
 
 const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
@@ -7,7 +14,6 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch stall statuses when modal becomes visible
   useEffect(() => {
     if (visible) {
       fetchStallStatuses();
@@ -17,55 +23,50 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
   const fetchStallStatuses = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Fetch distinct statuses from Stall table
       const { data: stallData, error: stallError } = await supabase
-        .from('Stall')
-        .select('status')
-        .not('status', 'is', null);
+        .from("Stall")
+        .select("status")
+        .not("status", "is", null);
 
       if (stallError) throw stallError;
 
-      // Get unique statuses from stalls
-      const stallStatuses = stallData?.map(item => item.status) || [];
+      const stallStatuses = stallData?.map((item) => item.status) || [];
       const uniqueStatuses = [...new Set(stallStatuses)]
-        .filter(status => status && typeof status === 'string')
-        .map(status => {
-          // Capitalize first letter and keep the rest as is
+        .filter((status) => status && typeof status === "string")
+        .map((status) => {
           return status.charAt(0).toUpperCase() + status.slice(1);
         });
 
-      // Define the correct order: Available -> Applied -> Raffle -> Countdown
-      const statusOrder = ['Available', 'Applied', 'Raffle', 'Countdown'];
-      
-      // Sort statuses according to your preferred order
-      const sortedStatuses = statusOrder.filter(status => 
+      const statusOrder = ["Available", "Applied", "Raffle", "Countdown"];
+
+      const sortedStatuses = statusOrder.filter((status) =>
         uniqueStatuses.includes(status)
       );
 
-      // Add any other statuses that might exist but aren't in our predefined order
       const otherStatuses = uniqueStatuses
-        .filter(status => !statusOrder.includes(status))
+        .filter((status) => !statusOrder.includes(status))
         .sort();
 
       const finalStatuses = [...sortedStatuses, ...otherStatuses];
 
-      // Set the statuses or fallback to defaults with correct order
-      setStallStatuses(finalStatuses.length > 0 ? finalStatuses : ['Available', 'Applied', 'Raffle', 'Countdown']);
+      setStallStatuses(
+        finalStatuses.length > 0
+          ? finalStatuses
+          : ["Available", "Applied", "Raffle", "Countdown"]
+      );
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching stall statuses:', err);
-      
-      // Fallback to default statuses with correct order if API fails
-      setStallStatuses(['Available', 'Applied', 'Raffle', 'Countdown']);
+      console.error("Error fetching stall statuses:", err);
+
+      setStallStatuses(["Available", "Applied", "Raffle", "Countdown"]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Combine status options with other sort options
-  const sortOptions = [...stallStatuses, 'Stall', 'Price', 'Location'];
+  const sortOptions = [...stallStatuses, "Stall", "Price", "Location"];
 
   const renderContent = () => {
     if (loading) {
@@ -81,8 +82,8 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
       return (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Error loading options</Text>
-          <TouchableOpacity 
-            style={styles.retryButton} 
+          <TouchableOpacity
+            style={styles.retryButton}
             onPress={fetchStallStatuses}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
@@ -103,7 +104,7 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
             ]}
             onPress={() => {
               onSelectOption(option);
-              onClose(); // Close modal after selection
+              onClose();
             }}
           >
             <Text
@@ -135,7 +136,7 @@ const SortModal = ({ visible, sortBy, onSelectOption, onClose, stallId }) => {
         <TouchableOpacity
           style={styles.sortModalContainer}
           activeOpacity={1}
-          onPress={() => {}} // Prevent modal from closing when tapping inside
+          onPress={() => {}}
         >
           {renderContent()}
         </TouchableOpacity>

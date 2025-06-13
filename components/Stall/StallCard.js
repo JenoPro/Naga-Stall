@@ -1,13 +1,20 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image, StyleSheet, Platform } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Platform,
+} from "react-native";
 import OverlayApplicationForm from "./ApplicationForm/OverlayApplicationForm";
 
-const StallCard = ({ 
-  item, 
-  handleViewImage, 
-  onApplicationSuccess, 
-  isWebLayout = false, 
-  screenWidth = 350 
+const StallCard = ({
+  item,
+  handleViewImage,
+  onApplicationSuccess,
+  isWebLayout = false,
+  screenWidth = 350,
 }) => {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
 
@@ -21,25 +28,30 @@ const StallCard = ({
 
   const handleApplicationSubmitted = () => {
     setShowApplicationForm(false);
-    // Call parent function to refresh data
+
     if (onApplicationSuccess) {
       onApplicationSuccess();
     }
   };
 
   const renderStatusButton = () => {
-    // Check if user has already applied to this stall (highest priority)
     if (item.hasUserApplied) {
       return (
-        <TouchableOpacity style={[styles.appliedButton, isWebLayout && styles.webButton]} disabled>
-          <Text style={[styles.appliedText, isWebLayout && styles.webButtonText]}>ALREADY APPLIED</Text>
+        <TouchableOpacity
+          style={[styles.appliedButton, isWebLayout && styles.webButton]}
+          disabled
+        >
+          <Text
+            style={[styles.appliedText, isWebLayout && styles.webButtonText]}
+          >
+            ALREADY APPLIED
+          </Text>
         </TouchableOpacity>
       );
     }
 
-    // Show button based on stall status
     const status = item.status?.toLowerCase();
-    
+
     switch (status) {
       case "available":
         return (
@@ -47,40 +59,69 @@ const StallCard = ({
             style={[styles.applyButton, isWebLayout && styles.webButton]}
             onPress={handleApplyNow}
           >
-            <Text style={[styles.applyText, isWebLayout && styles.webButtonText]}>APPLY NOW!</Text>
+            <Text
+              style={[styles.applyText, isWebLayout && styles.webButtonText]}
+            >
+              APPLY NOW!
+            </Text>
           </TouchableOpacity>
         );
       case "countdown":
         return (
-          <TouchableOpacity style={[styles.lockButton, isWebLayout && styles.webButton]} disabled>
-            <Text style={[styles.lockText, isWebLayout && styles.webButtonText]}>🔒 COUNTDOWN</Text>
+          <TouchableOpacity
+            style={[styles.lockButton, isWebLayout && styles.webButton]}
+            disabled
+          >
+            <Text
+              style={[styles.lockText, isWebLayout && styles.webButtonText]}
+            >
+              🔒 COUNTDOWN
+            </Text>
           </TouchableOpacity>
         );
       case "raffle":
         return (
-          <TouchableOpacity style={[styles.raffleButton, isWebLayout && styles.webButton]} disabled>
-            <Text style={[styles.raffleText, isWebLayout && styles.webButtonText]}>🎲 RAFFLE ONGOING</Text>
+          <TouchableOpacity
+            style={[styles.raffleButton, isWebLayout && styles.webButton]}
+            disabled
+          >
+            <Text
+              style={[styles.raffleText, isWebLayout && styles.webButtonText]}
+            >
+              🎲 RAFFLE ONGOING
+            </Text>
           </TouchableOpacity>
         );
       case "occupied":
       case "taken":
         return (
-          <TouchableOpacity style={[styles.occupiedButton, isWebLayout && styles.webButton]} disabled>
-            <Text style={[styles.occupiedText, isWebLayout && styles.webButtonText]}>OCCUPIED</Text>
+          <TouchableOpacity
+            style={[styles.occupiedButton, isWebLayout && styles.webButton]}
+            disabled
+          >
+            <Text
+              style={[styles.occupiedText, isWebLayout && styles.webButtonText]}
+            >
+              OCCUPIED
+            </Text>
           </TouchableOpacity>
         );
       default:
         return (
-          <TouchableOpacity style={[styles.unknownButton, isWebLayout && styles.webButton]} disabled>
-            <Text style={[styles.unknownText, isWebLayout && styles.webButtonText]}>
-              {item.status ? item.status.toUpperCase() : 'UNKNOWN STATUS'}
+          <TouchableOpacity
+            style={[styles.unknownButton, isWebLayout && styles.webButton]}
+            disabled
+          >
+            <Text
+              style={[styles.unknownText, isWebLayout && styles.webButtonText]}
+            >
+              {item.status ? item.status.toUpperCase() : "UNKNOWN STATUS"}
             </Text>
           </TouchableOpacity>
         );
     }
   };
 
-  // Helper function to get status badge color
   const getStatusBadgeStyle = () => {
     if (item.hasUserApplied) {
       return { backgroundColor: "#aaa" };
@@ -107,50 +148,45 @@ const StallCard = ({
     return item.status ? item.status.toUpperCase() : "UNKNOWN";
   };
 
-  // Calculate responsive dimensions - UPDATED FOR FULL WIDTH UTILIZATION
   const getCardWidth = () => {
-    if (!isWebLayout) return '100%';
-    
-    // Calculate based on available content width (screen width - navbar - padding)
-    const availableWidth = screenWidth - 80 - 40; // navbar width + content padding
-    
-    // Use the full available width for columns
+    if (!isWebLayout) return "100%";
+
+    const availableWidth = screenWidth - 80 - 40;
+
     if (availableWidth >= 1400) {
-      // 4 columns with spacing
-      return (availableWidth / 4) - 16;
+      return availableWidth / 4 - 16;
     } else if (availableWidth >= 1200) {
-      // 3 columns with spacing
-      return (availableWidth / 3) - 16;
+      return availableWidth / 3 - 16;
     } else if (availableWidth >= 900) {
-      // 2 columns with spacing
-      return (availableWidth / 2) - 16;
+      return availableWidth / 2 - 16;
     }
-    // Single column
+
     return availableWidth - 16;
   };
 
   const getImageHeight = () => {
     if (!isWebLayout) return 180;
-    
-    // Smaller image height for web - REDUCED SIZE
+
     const cardWidth = getCardWidth();
-    return Math.min(160, cardWidth * 0.55); // Reduced from 200px max and 0.6 ratio
+    return Math.min(160, cardWidth * 0.55);
   };
 
-  const cardStyles = isWebLayout ? [
-    styles.card,
-    styles.webCard,
-    { 
-      width: getCardWidth(),
-      marginHorizontal: 8, // Reduced margin
-      marginBottom: 16,    // Reduced margin
-    }
-  ] : [styles.card];
+  const cardStyles = isWebLayout
+    ? [
+        styles.card,
+        styles.webCard,
+        {
+          width: getCardWidth(),
+          marginHorizontal: 8,
+          marginBottom: 16,
+        },
+      ]
+    : [styles.card];
 
   const imageStyles = [
     styles.image,
     { height: getImageHeight() },
-    isWebLayout && styles.webImage
+    isWebLayout && styles.webImage,
   ];
 
   return (
@@ -186,54 +222,50 @@ const StallCard = ({
               }}
             />
           )}
-          
+
           {/* Status Badge Overlay */}
-          <View style={[
-            styles.statusBadge, 
-            getStatusBadgeStyle(),
-            isWebLayout && styles.webStatusBadge
-          ]}>
-            <Text style={[
-              styles.statusBadgeText,
-              isWebLayout && styles.webStatusBadgeText
-            ]}>
+          <View
+            style={[
+              styles.statusBadge,
+              getStatusBadgeStyle(),
+              isWebLayout && styles.webStatusBadge,
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusBadgeText,
+                isWebLayout && styles.webStatusBadgeText,
+              ]}
+            >
               {getStatusText()}
             </Text>
           </View>
         </TouchableOpacity>
-        
+
         {/* Stall Information */}
         <View style={[styles.info, isWebLayout && styles.webInfo]}>
           <View style={styles.headerRow}>
-            <Text style={[
-              styles.stallName,
-              isWebLayout && styles.webStallName
-            ]}>
+            <Text
+              style={[styles.stallName, isWebLayout && styles.webStallName]}
+            >
               STALL# {item.stall_number}
             </Text>
-            <Text style={[
-              styles.price,
-              isWebLayout && styles.webPrice
-            ]}>
+            <Text style={[styles.price, isWebLayout && styles.webPrice]}>
               ₱{item.price} / Monthly
             </Text>
           </View>
-          <Text style={[
-            styles.details,
-            isWebLayout && styles.webDetails
-          ]}>
+          <Text style={[styles.details, isWebLayout && styles.webDetails]}>
             {item.location}
           </Text>
-          <Text style={[
-            styles.details,
-            isWebLayout && styles.webDetails
-          ]}>
+          <Text style={[styles.details, isWebLayout && styles.webDetails]}>
             {item.size}
           </Text>
-          <View style={[
-            styles.statusContainer,
-            isWebLayout && styles.webStatusContainer
-          ]}>
+          <View
+            style={[
+              styles.statusContainer,
+              isWebLayout && styles.webStatusContainer,
+            ]}
+          >
             {renderStatusButton()}
           </View>
         </View>
@@ -251,7 +283,6 @@ const StallCard = ({
 };
 
 const styles = StyleSheet.create({
-  // Mobile Styles (Original)
   card: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -261,24 +292,26 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
-    position: 'relative',
+    position: "relative",
   },
-  
-  // Web-specific card styles - UPDATED FOR SMALLER SIZE
+
   webCard: {
-    marginBottom: 16, // Reduced from 20
-    shadowOpacity: 0.12, // Slightly reduced shadow
-    shadowRadius: 6,     // Reduced from 8
-    shadowOffset: { width: 0, height: 3 }, // Reduced from 4
-    elevation: 3,        // Reduced from 4
-    borderWidth: Platform.OS === 'web' ? 1 : 0,
-    borderColor: '#e0e0e0',
-    transition: Platform.OS === 'web' ? 'all 0.2s ease' : undefined,
-    ':hover': Platform.OS === 'web' ? {
-      shadowOpacity: 0.18,
-      shadowRadius: 8,
-      transform: [{ translateY: -2 }],
-    } : undefined,
+    marginBottom: 16,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    borderWidth: Platform.OS === "web" ? 1 : 0,
+    borderColor: "#e0e0e0",
+    transition: Platform.OS === "web" ? "all 0.2s ease" : undefined,
+    ":hover":
+      Platform.OS === "web"
+        ? {
+            shadowOpacity: 0.18,
+            shadowRadius: 8,
+            transform: [{ translateY: -2 }],
+          }
+        : undefined,
   },
 
   image: {
@@ -289,17 +322,17 @@ const styles = StyleSheet.create({
   },
 
   webImage: {
-    objectFit: 'cover',
+    objectFit: "cover",
   },
 
   webImageContainer: {
-    overflow: 'hidden',
+    overflow: "hidden",
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
   },
 
   statusBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: 10,
     right: 10,
     paddingHorizontal: 8,
@@ -313,11 +346,11 @@ const styles = StyleSheet.create({
   },
 
   webStatusBadge: {
-    paddingHorizontal: 8,  // Reduced from 10
-    paddingVertical: 4,    // Reduced from 5
-    borderRadius: 12,      // Reduced from 15
-    shadowOpacity: 0.25,   // Reduced from 0.3
-    shadowRadius: 2,       // Reduced from 3
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
   },
 
   statusBadgeText: {
@@ -327,8 +360,8 @@ const styles = StyleSheet.create({
   },
 
   webStatusBadgeText: {
-    fontSize: 10,          // Reduced from 11
-    letterSpacing: 0.3,    // Reduced from 0.5
+    fontSize: 10,
+    letterSpacing: 0.3,
   },
 
   info: {
@@ -336,7 +369,7 @@ const styles = StyleSheet.create({
   },
 
   webInfo: {
-    padding: 16,           // Reduced from 20
+    padding: 16,
   },
 
   headerRow: {
@@ -355,10 +388,10 @@ const styles = StyleSheet.create({
   },
 
   webStallName: {
-    fontSize: 14,          // Reduced from 16
-    paddingHorizontal: 8,  // Reduced from 10
-    paddingVertical: 5,    // Reduced from 6
-    borderRadius: 5,       // Reduced from 6
+    fontSize: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 5,
   },
 
   price: {
@@ -368,7 +401,7 @@ const styles = StyleSheet.create({
   },
 
   webPrice: {
-    fontSize: 14,          // Reduced from 16
+    fontSize: 14,
   },
 
   details: {
@@ -378,9 +411,9 @@ const styles = StyleSheet.create({
   },
 
   webDetails: {
-    fontSize: 13,          // Reduced from 14
-    marginTop: 6,          // Reduced from 8
-    lineHeight: 18,        // Reduced from 20
+    fontSize: 13,
+    marginTop: 6,
+    lineHeight: 18,
   },
 
   statusContainer: {
@@ -388,10 +421,9 @@ const styles = StyleSheet.create({
   },
 
   webStatusContainer: {
-    marginTop: 12,         // Reduced from 15
+    marginTop: 12,
   },
 
-  // Button Styles
   applyButton: {
     backgroundColor: "#1cbb1c",
     paddingVertical: 10,
@@ -400,10 +432,10 @@ const styles = StyleSheet.create({
   },
 
   webButton: {
-    paddingVertical: 10,   // Reduced from 12
-    borderRadius: 6,       // Reduced from 8
-    minHeight: 40,         // Reduced from 44
-    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 6,
+    minHeight: 40,
+    justifyContent: "center",
   },
 
   applyText: {
@@ -413,8 +445,8 @@ const styles = StyleSheet.create({
   },
 
   webButtonText: {
-    fontSize: 13,          // Reduced from 15
-    letterSpacing: 0.3,    // Reduced from 0.5
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
 
   lockButton: {

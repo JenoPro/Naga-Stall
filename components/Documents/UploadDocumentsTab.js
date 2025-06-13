@@ -18,7 +18,7 @@ import { documentTypes } from "./Components-Submissiontab/documentConfig";
 
 const MySubmissionTab = ({ userFullname, isConnected }) => {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const {
     documents,
     setDocuments,
@@ -42,13 +42,13 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
     }
   }, [userFullname]);
 
-  // Cross-platform alert function
   const showAlert = (title, message, buttons = []) => {
-    if (Platform.OS === 'web') {
-      // For web, use browser confirm/alert
+    if (Platform.OS === "web") {
       if (buttons.length > 1) {
         const confirmed = window.confirm(`${title}\n\n${message}`);
-        const confirmButton = buttons.find(btn => btn.style === 'destructive' || btn.text === 'Replace');
+        const confirmButton = buttons.find(
+          (btn) => btn.style === "destructive" || btn.text === "Replace"
+        );
         if (confirmed && confirmButton && confirmButton.onPress) {
           confirmButton.onPress();
         }
@@ -56,7 +56,6 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
         window.alert(`${title}\n\n${message}`);
       }
     } else {
-      // For mobile, use React Native Alert
       if (buttons.length > 0) {
         Alert.alert(title, message, buttons);
       } else {
@@ -67,7 +66,8 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
   const pickDocument = async (documentType) => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
         showAlert(
@@ -87,7 +87,7 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        
+
         setDocuments((prev) => ({
           ...prev,
           [documentType]: {
@@ -154,7 +154,10 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
       if (uploadedDocuments[documentType]) {
         const deleteResult = await deleteOldDocument(documentType);
         if (!deleteResult.success) {
-          console.log("Warning: Could not delete old document:", deleteResult.error);
+          console.log(
+            "Warning: Could not delete old document:",
+            deleteResult.error
+          );
         }
       }
 
@@ -165,10 +168,15 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
       );
 
       if (uploadResult.success) {
-        const dbResult = await updateDocumentsTable(documentType, uploadResult.publicUrl);
+        const dbResult = await updateDocumentsTable(
+          documentType,
+          uploadResult.publicUrl
+        );
 
         if (dbResult.success) {
-          const action = uploadedDocuments[documentType] ? "replaced" : "uploaded";
+          const action = uploadedDocuments[documentType]
+            ? "replaced"
+            : "uploaded";
           showAlert("Success", `${documentLabel} ${action} successfully!`);
 
           setDocuments((prev) => ({ ...prev, [documentType]: null }));
@@ -224,7 +232,10 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
 
     if (missingDocs.length > 0) {
       const missingLabels = missingDocs.map((doc) => doc.label).join(", ");
-      showAlert("Missing Required Documents", `Please upload: ${missingLabels}`);
+      showAlert(
+        "Missing Required Documents",
+        `Please upload: ${missingLabels}`
+      );
       return;
     }
 
@@ -256,7 +267,10 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
           );
 
           if (uploadResult.success) {
-            const dbResult = await updateDocumentsTable(docType, uploadResult.publicUrl);
+            const dbResult = await updateDocumentsTable(
+              docType,
+              uploadResult.publicUrl
+            );
             if (dbResult.success) {
               successCount++;
             } else {
@@ -321,7 +335,10 @@ const MySubmissionTab = ({ userFullname, isConnected }) => {
   };
 
   return (
-    <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+    <ScrollView
+      style={styles.content}
+      contentContainerStyle={styles.scrollContent}
+    >
       <View style={styles.uploadSection}>
         {!isConnected && <NetworkTroubleshooting />}
 

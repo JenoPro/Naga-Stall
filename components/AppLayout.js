@@ -30,24 +30,20 @@ export default function AppLayout() {
   }, []);
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout Confirmation",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel" },
-        { text: "No" },
-        {
-          text: "Yes",
-          onPress: async () => {
-            await AsyncStorage.clear();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "LoginScreen" }],
-            });
-          },
+    Alert.alert("Logout Confirmation", "Are you sure you want to logout?", [
+      { text: "Cancel" },
+      { text: "No" },
+      {
+        text: "Yes",
+        onPress: async () => {
+          await AsyncStorage.clear();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "LoginScreen" }],
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleLoadingComplete = useCallback(() => {
@@ -60,12 +56,10 @@ export default function AppLayout() {
 
   const handleTabPress = (tab) => {
     if (tab === "logout") return handleLogout();
-    
+
     if (tab !== activeTab) {
       setLoading(true);
       setPendingTab(tab);
-      // The actual tab change will happen after loading completes
-      // This is now handled by the NetworkAwareLoading component
     }
   };
 
@@ -88,8 +82,8 @@ export default function AppLayout() {
         <UserHeader userFullname={userFullname} userEmail={userEmail} />
         <View style={{ flex: 1 }}>{renderScreen()}</View>
         <BottomNavigation activeTab={activeTab} onTabPress={handleTabPress} />
-        <NetworkAwareLoading 
-          visible={loading} 
+        <NetworkAwareLoading
+          visible={loading}
           onLoadingComplete={handleLoadingComplete}
         />
       </SafeAreaView>
